@@ -590,7 +590,7 @@ function mapMount(h){
   const slot=document.getElementById('mapslot');if(!slot)return;
   const id=h.slice(2),c=D.courses.find(x=>x.id===id);if(!c)return;
   if(!MV.el){MV.el=document.createElement('div');MV.el.id='tmap';slot.appendChild(MV.el);
-    try{MV.map=new Tmapv2.Map('tmap',{center:new Tmapv2.LatLng(35.19,128.08),width:'100%',height:'250px',zoom:15,zoomControl:true,scrollwheel:false})}catch(e){setStat('지도를 불러오지 못했어요.');return}}
+    try{MV.map=new Tmapv2.Map('tmap',{center:new Tmapv2.LatLng(35.19,128.08),width:'100%',height:'250px',zoom:15,zoomControl:false,scrollwheel:false})}catch(e){setStat('지도를 불러오지 못했어요.');return}}
   else slot.insertBefore(MV.el,slot.firstChild);
   try{MV.map.resize(slot.clientWidth,250)}catch(e){}
   const r=resolve(c,S.cond,S.picks[id]);
