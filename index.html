@@ -291,10 +291,10 @@ const S={
   city:saved.city==='김해'?'김해':'진주',
   cond:Object.assign({date:today(),time:'afternoon',move:'walk',limit:1000,alc:'none',play:[],first:false,noRaw:false},saved.cond||{}),
   diary:Array.isArray(saved.diary)?saved.diary:[],
-  type:'all', picks:{}, open:0, sheet:null
+  type:'all', picks:{}, open:0, sheet:null, visits:(saved.visits&&typeof saved.visits==='object')?saved.visits:{}, oslots:[]
 };
 if(S.cond.date<today())S.cond.date=today();
-function save(){try{localStorage.setItem(LS,JSON.stringify({city:S.city,cond:S.cond,diary:S.diary}));return true}catch(e){return false}}
+function save(){try{localStorage.setItem(LS,JSON.stringify({city:S.city,cond:S.cond,diary:S.diary,visits:S.visits}));return true}catch(e){return false}}
 
 /* ---------- 추천 로직 ---------- */
 function stay(p){if(p.sub==='영화관')return 150;if(p.play==='공방·체험')return 90;return {'맛집':80,'카페':60,'술집':90,'산책·관광':50,'놀거리':60}[p.sec]}
@@ -424,7 +424,7 @@ function vHome(){
   <div style="margin-top:18px"><a class="cta" href="#plan">${ic('tune',20)}조건 고르고 추천받기</a></div>
   <section class="sect"><h2>어떤 데이트?</h2><div class="types">${Object.entries(TYPES).map(([k,t])=>{const n=all.filter(c=>c.type===k).length;return `<button class="typecard" style="background:${t.color}" data-act="type" data-v="${k}"><span>${t.label}<small>코스 ${n}개</small></span>${ic(t.icon,24)}</button>`}).join('')}</div></section>
   <section class="sect"><h2>팀이 직접 가본 곳이 많은 코스</h2><div class="list">${picks.map(r=>courseCard(r)).join('')}</div></section>
-  <p class="note">장소 정보는 2026년 11월 8일 카카오맵 기준이에요. 영업시간과 가격은 바뀔 수 있으니 가기 전에 확인해 주세요. <button data-act="info">데이터 안내 보기</button></p>
+  <p class="note" style="margin-bottom:-12px"><a href="#owner" style="font-weight:700">사장님이신가요? 입점 안내 보기</a></p><p class="note">장소 정보는 2026년 11월 8일 카카오맵 기준이에요. 영업시간과 가격은 바뀔 수 있으니 가기 전에 확인해 주세요. <button data-act="info">데이터 안내 보기</button></p>
   </div>${nav('home')}`;
 }
 
@@ -518,6 +518,7 @@ function stopHTML(r,s,i,car){
     ${p.wait?`<div class="box warn" style="margin-top:10px">웨이팅이 있을 수 있어요. 가기 전에 검색해 보세요.</div>`:''}
     ${kv.length?`<dl class="kv">${kv.map(k=>`<dt>${k[0]}</dt><dd>${esc(k[1])}</dd>`).join('')}</dl>`:'<p class="sub" style="margin-top:8px">영업시간과 가격 정보는 아직 없어요.</p>'}
     <div class="maplinks">${p.kakao?`<a class="maplink" href="${esc(p.kakao)}" target="_blank" rel="noopener">${ic('pin',18)}카카오맵에서 보기</a>`:''}${MAP?`<button class="maplink" data-act="nmap" data-i="${i}">${ic('route',18)}네이버지도 앱으로 길찾기</button>`:''}</div>
+    <div style="margin-top:6px">${S.visits[s.id]?`<span class="tag ok">방문 인증됨 · ${dlabel(S.visits[s.id])}</span>`:`<button class="chip sm" data-act="qr" data-id="${s.id}">${ic('camera',15)}방문 인증하기</button>`}</div>
     ${s.alts.length?`<div class="alts"><h4>다른 곳으로 바꾸기</h4><div class="chips">${s.alts.map(a=>`<button class="chip sm" data-act="swap" data-slot="${s.slot}" data-v="${a}">${esc(PL[a].name)}${PL[a].visited?' ·&nbsp;<span style="color:var(--ok)">가봤어요</span>':''}</button>`).join('')}</div></div>`:''}
   </div>`;
   return `<li class="stop">${leg}<span class="dotc" style="background:${sec[0]}">${ic(picon(p),18)}</span>
@@ -692,6 +693,38 @@ function vDiary(){
   </div>${nav('diary')}`;
 }
 
+/* ---------- 사장님 페이지 (예시 화면) ---------- */
+function vOwner(){
+  const days=['월','화','수','목','금','토','일'],v=[3,2,4,5,9,14,11],mx=Math.max(...v),tot=v.reduce((a,b)=>a+b,0);
+  const hrs=[['11~14시',9],['14~17시',7],['17~20시',21],['20시~',11]],hm2=Math.max(...hrs.map(x=>x[1]));
+  const slots=[['평일 14~17시','평일 14~17시'],['평일 20시~','평일 20시 이후'],['주말 14~17시','주말 14~17시']];
+  const card='background:var(--card);border-radius:22px;box-shadow:var(--shadow);padding:16px;margin-top:14px';
+  return `<div class="pad"><header class="top"><a class="iconbtn" href="#home" aria-label="홈으로">${ic('back',20)}</a><span class="tag warn">예시 화면</span></header>
+  <h1 class="display" style="font-size:28px;margin-top:16px">사장님 페이지</h1>
+  <p class="sub" style="font-size:14px;margin-top:4px">입점은 무료예요. 손님이 실제로 늘어난 걸 확인한 뒤에 유료를 고를 수 있어요.</p>
+  <div class="box warn">이 화면의 숫자는 모두 <b>지어낸 예시</b>예요. 실제 가게의 수치가 아니고, 아직 제휴한 가게도 없어요.</div>
+  <section class="sect"><h2>운영 방식</h2>
+   <div style="${card}"><span class="tag ok">1단계 · 무료</span><p style="margin-top:8px;font-weight:700">무료 입점 + 기본 리포트</p><p class="sub" style="font-size:13px;margin-top:4px">가게에 QR을 두면, 데이트핏으로 온 커플이 몇 팀인지 매달 알려드려요.</p></div>
+   <div style="${card}"><span class="tag">2단계 · 유료(선택)</span><p style="margin-top:8px;font-weight:700">프리미엄</p><p class="sub" style="font-size:13px;margin-top:4px">방문이 늘어난 걸 리포트로 확인한 가게만 고르면 돼요.</p><ul style="margin:8px 0 0;padding-left:18px;font-size:13px;line-height:1.7"><li>상세 리포트: 요일·시간대, 함께 들른 장소</li><li>한가한 시간대에 코스 우선 배치</li><li>가게가 직접 정하는 혜택 안내</li></ul><p class="sub" style="font-size:12px;margin-top:8px">요금은 아직 정하지 않았어요.</p></div>
+  </section>
+  <section class="sect"><h2>기본 리포트 <span class="tag warn">예시</span></h2>
+   <div style="${card}"><p class="sub" style="font-size:13px">이번 달 데이트핏 방문 인증</p><p class="display" style="font-size:34px">${tot}팀</p>
+    <div style="display:flex;align-items:flex-end;gap:8px;height:110px;margin-top:12px">${v.map((n,i)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px"><span style="font-size:11px">${n}</span><div style="width:100%;border-radius:8px 8px 0 0;background:${i>=4?'var(--peach)':'var(--lilac)'};height:${Math.round(n/mx*78)}px"></div><span class="sub" style="font-size:11.5px">${days[i]}</span></div>`).join('')}</div></div>
+  </section>
+  <section class="sect"><h2>상세 리포트 <span class="tag">프리미엄</span> <span class="tag warn">예시</span></h2>
+   <div style="${card}"><p style="font-weight:700;font-size:14px">방문 시간대</p>${hrs.map(h=>`<div class="row" style="margin-top:8px;font-size:13px"><span style="flex:0 0 64px">${h[0]}</span><div class="grow" style="background:#F3ECE4;border-radius:8px;height:14px"><div style="width:${Math.round(h[1]/hm2*100)}%;height:100%;border-radius:8px;background:${h[1]===Math.min(...hrs.map(x=>x[1]))?'var(--butter)':'var(--mint)'}"></div></div><span style="flex:0 0 34px;text-align:right">${h[1]}팀</span></div>`).join('')}
+    <p class="sub" style="font-size:12.5px;margin-top:10px">14~17시가 가장 한가해요. 아래에서 이 시간대를 채워 볼 수 있어요.</p>
+    <p style="font-weight:700;font-size:14px;margin-top:14px">우리 가게 앞뒤로 들른 곳</p><p class="sub" style="font-size:13px;margin-top:4px">전: 영화관 41% · 공방 22% / 후: 카페 53% · 산책 19%</p></div>
+  </section>
+  <section class="sect"><h2>한가한 시간대 채우기 <span class="tag">프리미엄</span></h2>
+   <div style="${card}"><p class="sub" style="font-size:13px">손님이 적은 시간대를 고르면, 그 시간에 맞는 코스에서 우리 가게를 먼저 보여줘요.</p>
+    <div class="chips" style="margin-top:10px">${slots.map(x=>`<button class="chip sm" data-act="oslot" data-v="${x[0]}" aria-pressed="${S.oslots.includes(x[0])}">${x[1]}</button>`).join('')}</div>
+    ${S.oslots.length?`<div class="box info" style="margin-top:12px"><b>이렇게 보여요</b><br><span class="tag warn" style="margin-top:6px">광고 · 제휴</span> <span class="tag plain">${esc(S.oslots.join(', '))} 우선</span><br><span class="sub" style="font-size:12px">손님 화면에는 "광고·제휴" 표시가 항상 붙어요. 영업시간이 안 맞는 날에는 우선 배치하지 않아요.</span></div>`:'<p class="sub" style="font-size:12px;margin-top:10px">시간대를 눌러 보세요. 데모라서 실제 코스 순서는 바뀌지 않아요.</p>'}</div>
+  </section>
+  <p class="note">방문 수는 손님이 가게 QR을 찍어 인증한 횟수로 셀 계획이에요. 손님이 누구인지는 가게에 제공하지 않아요.</p>
+  </div>`;
+}
+
 /* ---------- 시트 ---------- */
 function sheetHTML(){
   const s=S.sheet;if(!s)return '';
@@ -707,6 +740,7 @@ function sheetHTML(){
    <li>사진은 아직 없어요. 직접 찍었거나 사용 허락을 받은 사진만 넣을 예정이에요.</li>
    <li>스티커와 기록은 이 기기의 브라우저에만 저장돼요. 로그인이나 서버는 없는 데모예요.</li></ul>
    <div style="margin-top:18px"><button class="cta" data-act="close">알겠어요</button></div>`;
+  if(s.kind==='qr')inner=`<h2>방문 인증</h2><p style="margin-top:6px"><b>${esc(PL[s.id].name)}</b></p><ul><li>실제 서비스에서는 가게에 놓인 QR을 카메라로 찍어서 인증해요.</li><li>이 데모에는 QR이 없어서 아래 버튼으로 대신해요.</li><li>인증 기록은 가게에 보내는 리포트의 "방문 커플 수"로 집계할 계획이에요. 누가 왔는지는 가게에 알려주지 않아요.</li></ul><div class="row" style="margin-top:14px"><button class="cta ghost" data-act="close">닫기</button><button class="cta" data-act="qr-ok" data-id="${s.id}">인증한 걸로 하기</button></div>`;
   if(s.kind==='share')inner=`<h2>코스 공유</h2><p style="margin-top:6px">${s.copied?'복사했어요. 메신저에 붙여 넣으면 돼요.':'아래 내용을 길게 눌러 복사해 주세요.'}</p><textarea id="share-text" readonly>${esc(s.text)}</textarea><div style="margin-top:12px"><button class="cta" data-act="close">닫기</button></div>`;
   if(s.kind==='party')inner=`<h2>${s.list.length?'스티커가 붙었어요!':'기록에 담았어요'}</h2><p style="margin-top:6px">${esc(s.title)}</p>${s.list.length?`<div class="party">${s.list.map(x=>stkHTML(x)).join('')}</div>`:'<p style="margin-top:8px">이 코스로 받을 스티커는 이미 다 모았어요.</p>'}<div class="row" style="margin-top:14px"><button class="cta ghost" data-act="close" data-then="stickers">스티커북 보기</button><button class="cta" data-act="close">사진·메모 남기기</button></div>`;
   return `<div class="scrim" data-act="close-scrim"><div class="sheet" role="dialog" aria-modal="true">${inner}</div></div>`;
@@ -723,8 +757,8 @@ function render(keep){
   const y=window.scrollY;
   let html;
   if(h.startsWith('c-'))html=vDetail(h.slice(2));
-  else html=({home:vHome,plan:vPlan,courses:vCourses,stickers:vStickers,diary:vDiary}[h]||vHome)();
-  app.className='app'+((h==='plan'||h.startsWith('c-'))?' nonav':'');
+  else html=({home:vHome,plan:vPlan,courses:vCourses,stickers:vStickers,diary:vDiary,owner:vOwner}[h]||vHome)();
+  app.className='app'+((h==='plan'||h==='owner'||h.startsWith('c-'))?' nonav':'');
   app.innerHTML=html;
   if(keep&&h===lastRoute)window.scrollTo(0,y);else window.scrollTo(0,0);
   lastRoute=h;paintLayer();
@@ -747,6 +781,9 @@ document.addEventListener('click',e=>{
   if(a==='open'){const i=+b.dataset.i;S.open=S.open===i?-1:i;render(true);return}
   if(a==='swap'){const id=route().slice(2);(S.picks[id]=S.picks[id]||{})[b.dataset.slot]=v;render(true);toast(`${PL[v].name}(으)로 바꿨어요`);return}
   if(a==='stk'){toast(b.dataset.how);return}
+  if(a==='qr'){S.sheet={kind:'qr',id:b.dataset.id};paintLayer();return}
+  if(a==='qr-ok'){S.visits[b.dataset.id]=today();save();S.sheet=null;render(true);toast('방문을 인증했어요');return}
+  if(a==='oslot'){S.oslots=S.oslots.includes(v)?S.oslots.filter(x=>x!==v):[...S.oslots,v];render(true);return}
   if(a==='me'){findMe();return}
   if(a==='fit'){mapFit();return}
   if(a==='nmap'){openNaver(+b.dataset.i);return}
