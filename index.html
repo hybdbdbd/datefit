@@ -1,0 +1,788 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="데이트핏 — 진주·김해 데이트 코스 추천 데모">
+<title>데이트핏</title>
+<style>html,body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<script src="https://apis.openapi.sk.com/tmap/jsv2?version=1&appkey=6IrZ44VkAs1xBjnALhOu84RwcdxQQY5G2N1Ynlqw"></script>
+</head><body>
+<title>데이트핏</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Gaegu:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 폰 한 화면 폭(최대 430px) 한 줄. 크림 바탕 위에 흰 카드, 파스텔 스티커, 검정 알약 메뉴. 한 가지 밝은 테마로 고정. */
+:root{
+  --bg:#FBF6F0; --page:#EFE6DB; --card:#FFFFFF; --ink:#221E1C; --sub:#6B625C; --line:#EADFD2; --mute:#B8ACA0;
+  --peach:#FFC9B5; --lilac:#E7DEFF; --mint:#D9F0E3; --butter:#FFE9A8; --pink:#FAD4DF;
+  --link:#C2410C; --ok:#1E7A4D; --warnbg:#FFF1D6; --warnink:#7A4B00; --badbg:#FFE1DC; --badink:#A32A14;
+  --display:'Bagel Fat One','Noto Sans KR',sans-serif; --body:'Noto Sans KR',system-ui,-apple-system,sans-serif; --hand:'Gaegu','Noto Sans KR',sans-serif;
+  --shadow:0 4px 18px rgba(34,30,28,.07); --gut-l:max(20px,env(safe-area-inset-left,0px)); --gut-r:max(20px,env(safe-area-inset-right,0px));
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--page);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;word-break:keep-all;overflow-wrap:anywhere}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0;-webkit-tap-highlight-color:transparent}
+a{color:var(--link)}
+h1,h2,h3,p{margin:0}
+:focus-visible{outline:2.5px solid var(--ink);outline-offset:2px;border-radius:8px}
+.app{position:relative;max-width:430px;min-height:100%;margin:0 auto;background:var(--bg);padding-bottom:calc(104px + env(safe-area-inset-bottom,0px));box-shadow:0 0 60px rgba(34,30,28,.08)}
+.app.nonav{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+.pad{padding-left:var(--gut-l);padding-right:var(--gut-r)}
+.display{font-family:var(--display);font-weight:400;letter-spacing:-.2px}
+.sub{color:var(--sub)}
+.row{display:flex;align-items:center;gap:8px}
+.between{justify-content:space-between}
+.wrap{flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+
+/* 상단 */
+.top{display:flex;align-items:center;justify-content:space-between;padding-top:18px;gap:8px}
+.wordmark{font-family:var(--display);font-size:22px}
+.iconbtn{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:22px;background:var(--card);box-shadow:0 2px 10px rgba(34,30,28,.06)}
+.seg{display:inline-flex;padding:4px;border-radius:24px;background:var(--card);box-shadow:0 2px 10px rgba(34,30,28,.06)}
+.seg button{height:38px;padding:0 16px;border-radius:19px;font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);font-weight:700}
+
+/* 버튼·칩 */
+.cta{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:58px;padding:0 20px;border-radius:29px;background:var(--ink);color:var(--bg);font-size:16px;font-weight:700;text-decoration:none;transition:transform .12s}
+.cta:active,.card:active,.typecard:active{transform:scale(.98)}
+.cta.ghost{background:var(--card);color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--ink)}
+.cta.soft{background:var(--peach);color:var(--ink)}
+.cta[disabled]{opacity:.45}
+.chip{display:inline-flex;align-items:center;gap:6px;min-height:42px;padding:0 15px;border-radius:21px;background:var(--card);box-shadow:inset 0 0 0 1.5px var(--line);font-size:14px;white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);box-shadow:none;font-weight:700}
+.chip.sm{min-height:34px;padding:0 12px;font-size:13px;border-radius:17px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.scrollx{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.scrollx::-webkit-scrollbar{display:none}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:10px;font-size:11.5px;font-weight:700;background:var(--lilac);white-space:nowrap}
+.tag.plain{background:#F3ECE4;font-weight:500;color:#4A433E}
+.tag.ok{background:var(--mint)}
+.tag.warn{background:var(--warnbg);color:var(--warnink)}
+.tag.bad{background:var(--badbg);color:var(--badink)}
+
+/* 홈 */
+.hero h1{font-size:34px;line-height:1.22;margin-top:18px}
+.hero p{margin-top:8px;font-size:14px}
+.sect{margin-top:28px}
+.sect h2{font-size:16px;font-weight:700}
+.types{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.typecard{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:68px;padding:0 16px;border-radius:22px;text-align:left;font-size:15px;font-weight:700;transition:transform .12s}
+.typecard small{display:block;font-size:12px;font-weight:500;color:#4A433E}
+.typecard:nth-child(odd){transform:rotate(-1deg)}
+.typecard:nth-child(even){transform:rotate(.8deg)}
+.typecard:last-child:nth-child(odd){grid-column:1/-1;transform:rotate(-.4deg)}
+.next{display:flex;align-items:center;gap:12px;margin-top:16px;padding:14px 16px;border-radius:22px;background:var(--ink);color:var(--bg);width:100%;text-align:left}
+.next small{color:var(--peach);font-weight:700;font-size:12px}
+.note{margin-top:22px;font-size:12px;color:var(--sub);line-height:1.6}
+.note button{color:var(--link);text-decoration:underline;font-size:12px}
+
+/* 코스 카드 */
+.card{display:block;width:100%;text-align:left;border-radius:26px;background:var(--card);box-shadow:var(--shadow);overflow:hidden;transition:transform .12s}
+.collage{display:flex;align-items:center;justify-content:center;height:132px;position:relative}
+.collage.sm{height:auto;flex:0 0 92px;align-self:stretch;min-height:104px;border-radius:20px}
+.tile{display:flex;align-items:center;justify-content:center;width:62px;height:62px;border-radius:20px;background:var(--card);box-shadow:0 4px 12px rgba(34,30,28,.12);margin:0 -5px}
+.tile:nth-child(odd){transform:rotate(-7deg) translateY(4px)}
+.tile:nth-child(even){transform:rotate(6deg) translateY(-5px)}
+.collage.sm .tile{width:44px;height:44px;border-radius:14px;margin:-6px 0}
+.collage.sm{flex-direction:column}
+.rank{position:absolute;left:14px;top:12px;font-family:var(--display);font-size:13px;padding:5px 11px;border-radius:14px;background:var(--ink);color:var(--bg)}
+.cbody{padding:14px 16px 16px}
+.ctitle{font-size:19px;font-weight:700;line-height:1.3;letter-spacing:-.4px;margin-top:8px}
+.cstops{margin-top:6px;font-size:13px;color:var(--sub)}
+.reasons{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.card.mini{display:flex;gap:12px;padding:10px;border-radius:24px}
+.card.mini .cbody{padding:4px 4px 4px 0;flex:1;min-width:0}
+.card.mini .ctitle{font-size:16px;margin-top:6px}
+.list{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+.empty{margin-top:16px;padding:22px 18px;border-radius:24px;border:1.5px dashed var(--mute);text-align:center;color:var(--sub);font-size:14px}
+details.out{margin-top:18px;border-radius:20px;background:#F3ECE4;padding:4px 14px}
+details.out summary{min-height:44px;display:flex;align-items:center;font-size:13px;font-weight:700;cursor:pointer;list-style:none}
+details.out summary::-webkit-details-marker{display:none}
+details.out li{font-size:13px;color:#4A433E;padding:6px 0;border-top:1px solid var(--line)}
+details.out ul{margin:0;padding:0 0 8px;list-style:none}
+
+/* 조건 */
+.q{padding:18px 0;border-bottom:1px solid var(--line)}
+.q:last-child{border-bottom:0}
+.q h2{font-size:15px;font-weight:700;margin-bottom:10px}
+.q h2 small{font-weight:400;color:var(--sub);font-size:12px;margin-left:6px}
+.opt2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.optcard{min-height:64px;padding:10px 14px;border-radius:18px;background:var(--card);box-shadow:inset 0 0 0 1.5px var(--line);text-align:left;font-size:14px}
+.optcard small{display:block;font-size:11.5px;color:var(--sub)}
+.optcard[aria-pressed="true"]{background:var(--ink);color:var(--bg);box-shadow:none;font-weight:700}
+.optcard[aria-pressed="true"] small{color:#D9D1CA;font-weight:400}
+.optrow{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:52px;padding:8px 14px;border-radius:16px;background:var(--card);box-shadow:inset 0 0 0 1.5px var(--line);text-align:left;font-size:14px}
+.optrow small{color:var(--sub);font-size:12px;margin-left:6px}
+.optrow .dot{flex:0 0 20px;height:20px;border-radius:10px;box-shadow:inset 0 0 0 1.5px var(--mute)}
+.optrow[aria-pressed="true"]{box-shadow:inset 0 0 0 2px var(--ink);font-weight:700}
+.optrow[aria-pressed="true"] .dot{background:var(--ink);box-shadow:inset 0 0 0 5px var(--card),0 0 0 1.5px var(--ink)}
+.dim{opacity:.4;filter:saturate(.2);pointer-events:none}
+.switch{position:relative;flex:0 0 52px;height:32px;border-radius:16px;background:#D9D1CA;transition:background .15s}
+.switch::after{content:"";position:absolute;left:3px;top:3px;width:26px;height:26px;border-radius:13px;background:#fff;transition:transform .15s}
+button[aria-pressed="true"]>.switch{background:var(--ink)}
+button[aria-pressed="true"]>.switch::after{transform:translateX(20px)}
+.dateinput{height:42px;padding:0 12px;border-radius:21px;border:1.5px solid var(--line);background:var(--card);font:inherit;font-size:14px;color:var(--ink)}
+.hint{margin-top:8px;font-size:12px;color:var(--sub)}
+
+/* 하단 고정 */
+.dock{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:430px;padding:10px var(--gut-r) calc(14px + env(safe-area-inset-bottom,0px)) var(--gut-l);background:linear-gradient(rgba(251,246,240,0),var(--bg) 26%);z-index:5;display:flex;gap:8px}
+.nav{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:430px;padding:8px max(16px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:linear-gradient(rgba(251,246,240,0),var(--bg) 30%);z-index:5}
+.nav div{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding:6px;border-radius:30px;background:var(--ink)}
+.nav a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0;border-radius:24px;text-decoration:none;color:#D9D1CA;font-size:11px}
+.nav a[aria-current="page"]{background:var(--peach);color:var(--ink);font-weight:700}
+
+/* 상세 */
+.dhero{position:relative;height:190px;display:flex;align-items:center;justify-content:center;border-radius:0 0 34px 34px}
+.dhero .tile{width:78px;height:78px;border-radius:24px}
+.back{position:absolute;left:var(--gut-l);top:14px}
+.dtitle{font-size:28px;line-height:1.25;margin-top:8px}
+.meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.box{margin-top:14px;padding:12px 14px;border-radius:18px;font-size:13px;line-height:1.55}
+.box.info{background:#F3ECE4;color:#4A433E}
+.box.warn{background:var(--warnbg);color:var(--warnink)}
+.box ul{margin:4px 0 0;padding-left:18px}
+.tl{list-style:none;margin:18px 0 0;padding:0}
+.stop{position:relative;padding-left:46px}
+.stop::before{content:"";position:absolute;left:17px;top:0;bottom:0;border-left:2px dashed #D9CDBF}
+.stop:first-child::before{top:26px}
+.stop:last-child::before{bottom:auto;height:26px}
+.stop:only-child::before{display:none}
+.dotc{position:absolute;left:0;top:10px;display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:18px;border:3px solid var(--bg)}
+.shead{display:flex;align-items:center;gap:10px;width:100%;min-height:56px;padding:6px 0;text-align:left}
+.shead b{display:block;font-size:16px}
+.shead span.t{font-size:12px;color:var(--sub)}
+.pm{flex:0 0 30px;height:30px;border-radius:15px;background:var(--card);box-shadow:0 2px 8px rgba(34,30,28,.08);display:flex;align-items:center;justify-content:center;font-size:17px}
+.sbody{margin:2px 0 12px;padding:14px;border-radius:22px;background:var(--card);box-shadow:var(--shadow);animation:pop .18s ease-out}
+.sbody p{font-size:13.5px;line-height:1.6}
+.kv{display:grid;grid-template-columns:52px minmax(0,1fr);gap:6px 10px;margin-top:10px;font-size:13px}
+.kv dt{color:var(--sub)}
+.kv dd{margin:0}
+.maplink{display:inline-flex;align-items:center;gap:6px;min-height:44px;margin-top:8px;font-size:14px;font-weight:700}
+.maplinks{display:flex;flex-wrap:wrap;gap:4px 16px}
+button.maplink{color:var(--link)}
+/* 지도 */
+.mapcard{margin-top:18px;border-radius:22px;background:var(--card);box-shadow:var(--shadow);overflow:hidden}
+.mapslot{position:relative;height:250px;background:#EEE7DE}
+.mapslot>#tmap{position:absolute;inset:0}
+.mapmsg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;text-align:center;font-size:13px;color:var(--sub);z-index:2;pointer-events:none}
+.mapbar{display:flex;flex-wrap:wrap;gap:8px;padding:12px 14px 4px}
+.mapinfo{padding:4px 14px 12px;font-size:12px;color:var(--sub);line-height:1.55}
+.mapinfo b{color:var(--ink)}
+.mk{width:28px;height:28px;border-radius:14px;display:flex;align-items:center;justify-content:center;font:700 13px var(--body);color:var(--ink);border:2.5px solid var(--ink);box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.mk.me{background:#2F6BFF;border-color:#fff;color:#fff;width:22px;height:22px;font-size:0}
+.alts{margin-top:8px;padding-top:12px;border-top:1px solid var(--line)}
+.alts h4{margin:0 0 8px;font-size:12.5px;font-weight:700}
+.leg{margin:0 0 6px;font-size:12.5px;color:#4A433E;display:flex;align-items:center;gap:6px}
+.leg.q{padding:0;border:0;color:var(--sub)}
+.photoph{display:flex;gap:6px;margin-bottom:12px}
+.photoph div{flex:1;height:74px;border-radius:14px;display:flex;align-items:center;justify-content:center}
+
+/* 스티커 */
+.board{display:flex;flex-wrap:wrap;justify-content:center;gap:16px 10px;margin-top:18px;padding:24px 12px;border-radius:28px;background:var(--card);box-shadow:var(--shadow)}
+.stk{display:flex;flex-direction:column;align-items:center;gap:6px;width:98px;font-size:12.5px;text-align:center}
+.stk i{display:flex;align-items:center;justify-content:center;width:86px;height:86px;border:4px solid #fff;box-shadow:0 3px 10px rgba(34,30,28,.16)}
+.stk:nth-child(odd) i{border-radius:43px}
+.stk:nth-child(even) i{border-radius:28px}
+.stk.on:nth-child(3n) i{transform:rotate(-6deg)}
+.stk.on:nth-child(3n+1) i{transform:rotate(5deg)}
+.stk.on:nth-child(3n+2) i{transform:rotate(-2deg)}
+.stk.on{font-weight:700}
+.stk.off i{background:transparent!important;border:2px dashed #CDBFB1;box-shadow:none;opacity:.9}
+.stk.off{color:var(--sub)}
+.reward{display:flex;align-items:center;gap:14px;margin-top:16px;padding:16px;border-radius:24px;background:var(--ink);color:var(--bg)}
+.reward small{color:var(--peach);font-weight:700;font-size:12px}
+.reward p{font-size:12px;color:#D9D1CA;margin-top:3px}
+.reward .n{font-family:var(--display);font-size:28px;color:var(--peach);white-space:nowrap}
+
+/* 기록 */
+.plan{padding:14px 16px;border-radius:22px;background:var(--card);box-shadow:var(--shadow)}
+.plan .ctitle{margin-top:4px;font-size:17px}
+.polaroid{padding:12px 12px 16px;background:#fff;box-shadow:0 8px 24px rgba(34,30,28,.12);width:calc(100% - 28px)}
+.polaroid:nth-child(odd){transform:rotate(-1.6deg);align-self:flex-start}
+.polaroid:nth-child(even){transform:rotate(1.4deg);align-self:flex-end}
+.pphoto{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;height:190px;font-size:13px;color:#4A433E;overflow:hidden;position:relative}
+.pphoto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.polaroid h3{font-family:var(--hand);font-size:23px;line-height:1.2;margin:12px 4px 0}
+.polaroid .d{font-size:12px;color:var(--sub);margin:2px 4px 0}
+.memo{display:block;width:calc(100% - 8px);margin:8px 4px 0;min-height:56px;padding:8px 10px;border:1.5px dashed var(--line);border-radius:12px;background:transparent;font-family:var(--hand);font-size:19px;line-height:1.3;color:var(--ink);resize:vertical}
+.memo::placeholder{color:#8A7F76}
+.textbtn{min-height:44px;padding:0 10px;font-size:13px;color:var(--sub);text-decoration:underline}
+.diary{display:flex;flex-direction:column;gap:22px;margin-top:18px}
+
+/* 시트·토스트 */
+.scrim{position:fixed;inset:0;background:rgba(34,30,28,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center;animation:fade .15s}
+.sheet{width:100%;max-width:430px;max-height:86%;overflow:auto;background:var(--bg);border-radius:30px 30px 0 0;padding:22px var(--gut-r) calc(22px + env(safe-area-inset-bottom,0px)) var(--gut-l);animation:up .22s ease-out}
+.sheet h2{font-family:var(--display);font-weight:400;font-size:24px}
+.sheet p,.sheet li{font-size:14px;line-height:1.65;color:#4A433E}
+.sheet ul{padding-left:18px;margin:10px 0 0}
+.sheet textarea{width:100%;min-height:150px;margin-top:12px;padding:12px;border-radius:14px;border:1.5px solid var(--line);font:inherit;font-size:14px;background:#fff;color:var(--ink)}
+.toast{position:fixed;left:50%;bottom:calc(112px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);max-width:calc(100% - 40px);padding:12px 18px;border-radius:22px;background:var(--ink);color:var(--bg);font-size:14px;z-index:30;animation:pop .18s ease-out;text-align:center}
+.party{display:flex;justify-content:center;flex-wrap:wrap;gap:12px;margin:18px 0 6px}
+.party .stk i{animation:stick .45s cubic-bezier(.2,1.5,.4,1) both}
+.party .stk:nth-child(2) i{animation-delay:.12s}.party .stk:nth-child(3) i{animation-delay:.24s}
+@keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.toast{animation-name:tpop}@keyframes tpop{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes stick{from{transform:scale(1.8) rotate(-18deg);opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="app" id="app"></div>
+<div id="layer"></div>
+
+<script>
+const D={"courses": [{"id": "j-car-jinyangho", "city": "진주", "type": "car", "zone": "진양호·평거", "car": "need", "title": "진양호 드라이브, 호수 앞 카페까지", "stops": [{"id": "jinyangho-observatory", "alts": ["jinyangho-sunset-deck", "jinyangho-park"], "opt": false, "core": false}, {"id": "coffee-flower", "alts": [], "opt": false, "core": false}, {"id": "pasta-place", "alts": ["kitchen-india"], "opt": false, "core": false}], "note": "장소 사이는 차로 이동해요. 차량 이동 시간은 아직 재지 않았어요."}, {"id": "j-drink-gajwa", "city": "진주", "type": "drink", "zone": "가좌 · 경상대 앞", "barCore": true, "title": "볼링 한 판 걸고, 바에서 한 잔", "stops": [{"id": "poetic-scenery", "alts": [], "opt": false, "core": false}, {"id": "xlane-bowling", "alts": [], "opt": true, "core": false}, {"id": "gooddaygoodies", "alts": ["sound-garden"], "opt": false, "core": false}]}, {"id": "j-drink-chilam", "city": "진주", "type": "drink", "zone": "칠암 · 동진로", "barCore": true, "title": "오락실에서 놀다가, 사시미에 한 잔", "stops": [{"id": "hieol", "alts": [], "opt": false, "core": false}, {"id": "photosignature-chilam", "alts": [], "opt": true, "core": false}, {"id": "jumping-battle", "alts": [], "opt": false, "core": false}, {"id": "yeonhoejip", "alts": [], "opt": false, "core": true}]}, {"id": "j-drink-hadae", "city": "진주", "type": "drink", "zone": "하대 · 도동로", "title": "팥빙수로 시작해 동파육까지", "stops": [{"id": "hadae-patbingsu", "alts": [], "opt": false, "core": false}, {"id": "mihobibi", "alts": [], "opt": false, "core": false}, {"id": "seungseung-brewery", "alts": [], "opt": false, "core": false}]}, {"id": "j-movie-old", "city": "진주", "type": "movie", "zone": "원도심 · 진주성", "title": "영화 끝나고, 숯불 꼬치", "stops": [{"id": "megabox-jinju-jungan", "alts": [], "opt": false, "core": true}, {"id": "yakitori-aoi", "alts": [], "opt": false, "core": false}, {"id": "heya", "alts": [], "opt": false, "core": false}, {"id": "jinjuseong", "alts": [], "opt": true, "core": false}, {"id": "le-montreux", "alts": [], "opt": true, "core": false}]}, {"id": "j-movie-gaho", "city": "진주", "type": "movie", "zone": "가호 · 남강변", "title": "영화 보고, 강변에서 크로플", "stops": [{"id": "lotte-mbcine-jinju", "alts": [], "opt": false, "core": true}, {"id": "la-tulip", "alts": [], "opt": false, "core": false}, {"id": "poetic-scenery", "alts": [], "opt": false, "core": false}]}, {"id": "j-mood-mangyeong", "city": "진주", "type": "mood", "zone": "망경 · 남강", "title": "한옥 카페에서 남강 산책까지", "stops": [{"id": "eunanjae", "alts": [], "opt": false, "core": false}, {"id": "mulbit-naru", "alts": [], "opt": false, "core": false}, {"id": "chupt", "alts": [], "opt": false, "core": false}]}, {"id": "j-mood-old", "city": "진주", "type": "mood", "zone": "원도심 · 진주성", "title": "도라야끼 하나 물고, 진주성 한 바퀴", "stops": [{"id": "heya", "alts": [], "opt": false, "core": false}, {"id": "jinjuseong", "alts": [], "opt": false, "core": false}, {"id": "yakitori-aoi", "alts": [], "opt": false, "core": false}]}, {"id": "j-play-sangdae", "city": "진주", "type": "play", "zone": "상대 · 하대", "title": "향수 만들고, 양식 한 끼", "stops": [{"id": "louis13-gongbang", "alts": [], "opt": false, "core": true}, {"id": "node-cafe", "alts": [], "opt": false, "core": false}, {"id": "mihobibi", "alts": [], "opt": true, "core": false}]}, {"id": "j-play-gajwa", "city": "진주", "type": "play", "zone": "가좌 · 경상대 앞", "title": "경상대 앞에서 놀다가, 네컷 한 장", "stops": [{"id": "cafe-and-books", "alts": ["dohye-gongbang", "xlane-bowling"], "opt": false, "core": true}, {"id": "poetic-scenery", "alts": [], "opt": false, "core": false}, {"id": "stickerz-gnu", "alts": [], "opt": false, "core": false}, {"id": "odt", "alts": [], "opt": true, "core": false}]}, {"id": "g-car-daedong", "city": "김해", "type": "car", "zone": "낙동강 · 대동", "car": "need", "title": "대동 카페에서 쉬다가, 생태공원 산책", "stops": [{"id": "bellavita", "alts": ["pause-soom"], "opt": false, "core": false}, {"id": "daedong-eco-park", "alts": [], "opt": false, "core": false}], "note": "장소 사이는 차로 이동해요. 대동 쪽 식사 장소는 아직 조사 중이에요."}, {"id": "g-car-saengnim", "city": "김해", "type": "car", "zone": "낙동강 · 생림", "car": "need", "title": "철교 위 레일바이크, 강변 브런치", "stops": [{"id": "nakdong-railpark", "alts": [], "opt": false, "core": true}, {"id": "masa-brunch", "alts": [], "opt": false, "core": false}], "note": "장소 사이는 차로 이동해요. 레일바이크는 2인 15,000원이에요."}, {"id": "g-drink-samgye", "city": "김해", "type": "drink", "zone": "삼계동", "station": "장신대역", "barCore": true, "title": "명태조림 한 상, 2차는 골목에서", "stops": [{"id": "hwanggeum-myeongtae", "alts": [], "opt": false, "core": false}, {"id": "bingsudang-samgye", "alts": [], "opt": true, "core": false}, {"id": "checkmate-boardgame", "alts": ["photoism-samgye"], "opt": true, "core": false}, {"id": "bueok-samgye", "alts": ["tsukoi"], "opt": false, "core": false}]}, {"id": "g-drink-naeoe", "city": "김해", "type": "drink", "zone": "내외동", "barCore": true, "title": "닌텐도 한 판, 야키토리에 한 잔", "stops": [{"id": "ott-private", "alts": [], "opt": false, "core": false}, {"id": "monster-boardgame", "alts": [], "opt": true, "core": false}, {"id": "yakitori-roman", "alts": [], "opt": false, "core": true}]}, {"id": "g-drink-bong", "city": "김해", "type": "drink", "zone": "봉리단길", "station": "봉황역", "barCore": true, "title": "라구 파스타 먹고, 위스키 한 잔", "stops": [{"id": "denwes", "alts": [], "opt": false, "core": false}, {"id": "cafe-tangja", "alts": [], "opt": true, "core": false}, {"id": "dartagnan", "alts": [], "opt": false, "core": true}], "note": "세 곳 모두 봉리단길 안이에요. 오히루텐 기준으로 덴웨스 189m, 카페탱자 244m, 달타냥 407m예요."}, {"id": "g-movie-buwon", "city": "김해", "type": "movie", "zone": "부원 · 봉리단길", "station": "부원역", "title": "영화 보고, 봉리단길에서 한 끼", "stops": [{"id": "lotte-gimhae-buwon", "alts": [], "opt": false, "core": true}, {"id": "ohiruten", "alts": ["denwes", "duckle"], "opt": false, "core": false}, {"id": "cafe-tangja", "alts": [], "opt": false, "core": false}]}, {"id": "g-movie-naeoe", "city": "김해", "type": "movie", "zone": "내외동 · 연지공원", "station": "연지공원역", "title": "CGV 보고, 연지공원 한 바퀴", "stops": [{"id": "cgv-gimhae", "alts": [], "opt": false, "core": true}, {"id": "dohyungmin", "alts": [], "opt": false, "core": false}, {"id": "yeonji-park", "alts": [], "opt": false, "core": false}]}, {"id": "g-mood-bong", "city": "김해", "type": "mood", "zone": "봉리단길", "station": "봉황역", "title": "봉리단길 카페 골라 가고, 소품샵 구경", "stops": [{"id": "cafe-tangja", "alts": ["sagye", "nichinichi", "godongjip", "bambi-gonggi", "tog-coffee", "hey-green"], "opt": false, "core": false}, {"id": "denwes", "alts": ["elwoody", "bistro-bongridan", "ohiruten", "duckle"], "opt": false, "core": false}, {"id": "kumine", "alts": ["katsutadai"], "opt": false, "core": false}, {"id": "myeongwol", "alts": [], "opt": true, "core": false}], "note": "모두 봉리단길 안이에요. 명월은 오히루텐 기준 782m 떨어져 있어요."}, {"id": "g-play-bong", "city": "김해", "type": "play", "zone": "봉리단길", "station": "봉황역", "title": "공방에서 만들고, 봉리단길에서 놀기", "stops": [{"id": "hyanggi-jejakso", "alts": ["gongbang-wa"], "opt": false, "core": true}, {"id": "moyeora-boardgame", "alts": ["photosignature-bongridan"], "opt": false, "core": false}, {"id": "ohiruten", "alts": ["denwes"], "opt": false, "core": false}, {"id": "bambi-gonggi", "alts": [], "opt": true, "core": false}]}, {"id": "g-play-eobang", "city": "김해", "type": "play", "zone": "어방동 · 인제대 앞", "title": "보드게임 한 판, 돈까스 한 접시", "stops": [{"id": "river-boardgame", "alts": [], "opt": false, "core": true}, {"id": "photosignature-eobang", "alts": [], "opt": false, "core": false}, {"id": "jangsu-donkatsu", "alts": [], "opt": false, "core": false}], "note": "경전철 인제대역에서 2.4km 떨어져 있어요. 차나 버스로 가는 걸 권해요."}], "places": {"jinyangho-observatory": {"name": "진양호 전망대", "sec": "산책·관광", "sub": "전망대", "addr": "경남 진주시 남강로1번길 146", "parking": "카카오맵: 진양호동물원 안 넓은 무료 주차장, 전망대까지 산책로", "pk": "있음(무료)", "raw": false, "visited": true, "kakao": "https://place.map.kakao.com/476880483", "blurb": "진양호공원 안 전망대. 카카오맵 태그: 나들이, 벚꽃명소, 산책로. 카카오맵 평점 4.6 (30건).", "lm": true}, "jinyangho-sunset-deck": {"name": "진양호 노을전망대", "sec": "산책·관광", "sub": "전망대(노을)", "addr": "경남 진주시 내동면 삼계리 683-11", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/904933979", "blurb": "카카오맵 소개: 노을빛 호수 위 산책길. 카카오맵 평점 4.8 (4건).", "lm": false}, "jinyangho-park": {"name": "진양호 공원", "sec": "산책·관광", "sub": "공원·전망대", "addr": "경상남도 진주시 남강로1번길 96-6 (판문동)", "hours": "동물원 하절기 09:00~18:00, 동절기 09:00~17:00 (공원 자체 시간은 출처에 없음)", "raw": false, "visited": false, "blurb": "인공호수 진양호 옆 공원. 3층 전망대에서 호수와 시가지, 지리산이 보이고 동물원이 있다.", "lm": false}, "coffee-flower": {"name": "커피플라워 진양호점", "sec": "카페", "sub": "핸드드립", "addr": "경남 진주시 남강로 36 1~2층", "hours": "매일 10:00~22:00 (카카오맵 목록)", "price": "핸드드립 6,500원 (카카오맵 메뉴)", "parking": "카카오맵: 무료", "pk": "있음(카카오맵 표시, 확인 필요)", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/12613836", "blurb": "진양호 앞 대형 로스터리 카페. 카카오맵 태그: 루프탑, 데이트코스, 핸드드립전문점. 카카오맵 평점 4.0 (48건), 블로그 233건.", "menu": ["아메리카노", "카페라떼", "핸드드립커피"], "h": {"d": [0, 1, 2, 3, 4, 5, 6], "o": "10:00", "c": "22:00", "br": null}, "lm": false}, "pasta-place": {"name": "파스타 플레이스", "sec": "맛집", "sub": "이탈리안", "addr": "경남 진주시 신평공원길 65 1층", "closed": "일요일 (카카오맵 목록)", "price": "로제 땡초 파스타 16,900원, 리조또&큐브스테이크 20,900원 (카카오맵 메뉴)", "parking": "카카오맵: 무료", "pk": "있음(카카오맵 표시, 확인 필요)", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/112770942", "h": {"d": [0, 1, 2, 3, 4, 5], "o": null, "c": null, "br": null}, "lm": false}, "kitchen-india": {"name": "키친인디아", "sec": "맛집", "sub": "인도요리", "addr": "경남 진주시 남강로309번길 14 2층", "hours": "매일 11:20~21:00, 휴게 15:00~17:00 (카카오맵 목록)", "price": "탄두리 치킨 11,000원, 파니르 버터 마살라 13,000원 (카카오맵 메뉴)", "parking": "카카오맵: 건물 1층 7대, 근처 공영주차장·롤링핀 건물 유료주차장", "pk": "있음(7대)", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/635289826", "h": {"d": [0, 1, 2, 3, 4, 5, 6], "o": "11:20", "c": "21:00", "br": ["15:00", "17:00"]}, "lm": false}, "poetic-scenery": {"name": "포에틱시너리", "sec": "맛집", "sub": "양식", "addr": "경남 진주시 진주대로 518 2층", "hours": "매일 11:00~21:00, 휴게 15:00~16:00 (카카오맵)", "price": "목살 스테이크 세트 41,900원, 로제빠네 17,900원, 알리오 올리오 9,900원 (카카오맵 메뉴)", "parking": "카카오맵: 건물 지하 주차장 무료", "pk": "있음(지하, 무료)", "raw": false, "visited": true, "kakao": "https://place.map.kakao.com/1118021790", "blurb": "가격대가 조금 있지만 분위기가 정말 좋은 양식당 (팀 평가). 큰 창 너머로 나무가 보이고 은은한 조명의 공간이다.", "h": {"d": [0, 1, 2, 3, 4, 5, 6], "o": "11:00", "c": "21:00", "br": ["15:00", "16:00"]}, "lm": false}, "xlane-bowling": {"name": "엑스레인볼링센터", "sec": "놀거리", "sub": "볼링장", "play": "스포츠·액티비티", "addr": "경남 진주시 가좌안골길10번길 9 4층", "raw": false, "visited": true, "kakao": "https://place.map.kakao.com/1280630579", "blurb": "락볼링장(카카오맵 태그). 카카오맵 평점 4.7 (3건).", "lm": false}, "gooddaygoodies": {"name": "굿데이구디스 진주가좌본점", "sec": "술집", "sub": "와인바·LP바", "addr": "경남 진주시 가좌안골길24번길 14 1층", "hours": "매일 19:00~02:00 (카카오맵 목록)", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/1973991815", "blurb": "카카오맵 태그: LP바, 위스키바, 재즈바, 칵테일바, 소개팅. 카카오맵 평점 4.7 (7건).", "h": {"d": [0, 1, 2, 3, 4, 5, 6], "o": "19:00", "c": "02:00", "br": null}, "bar": "light", "lm": false}, "sound-garden": {"name": "사운드가든", "sec": "술집", "sub": "칵테일바", "addr": "경남 진주시 가좌길 18-1 2층", "hours": "매일 19:00~01:00 (카카오맵 목록)", "price": "밀리언달러마가리타 14,000원, 모히토 13,000원 (카카오맵 메뉴)", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/12045730", "blurb": "인테리어가 좋다고 알려진 바.", "h": {"d": [0, 1, 2, 3, 4, 5, 6], "o": "19:00", "c": "01:00", "br": null}, "bar": "light", "lm": false}, "hieol": {"name": "히얼", "sec": "카페", "sub": "카페", "addr": "경남 진주시 진주대로930번길 10-1 2층", "hours": "화~일 11:00~21:00 (카카오맵 목록)", "price": "히얼 커피 5,000원 (카카오맵 메뉴)", "parking": "카카오맵: 별도 주차 없음, 맞은편 공영주차장", "pk": "없음(맞은편 공영)", "raw": false, "visited": true, "kakao": "https://place.map.kakao.com/743012047", "blurb": "식물 많은 감성카페(카카오맵 요약). 카카오맵 평점 4.4 (7건).", "h": {"d": [1, 2, 3, 4, 5, 6], "o": "11:00", "c": "21:00", "br": null}, "lm": false}, "photosignature-chilam": {"name": "포토시그니처 진주칠암점", "sec": "놀거리", "sub": "즉석사진", "play": "사진·포토부스", "addr": "경남 진주시 동진로20번길 9 1층", "raw": false, "visited": true, "kakao": "https://place.map.kakao.com/692593253", "lm": false}, "jumping-battle": {"name": "점핑배틀 진주점", "sec": "놀거리", "sub": "오락실", "play": "보드게임·게임", "addr": "경남 진주시 동진로 25 태성빌딩 6층 603~604호", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/1931863973", "blurb": "오락실. 카카오맵 평점 5.0 (1건).", "lm": false}, "yeonhoejip": {"name": "연회집 칠암본점", "sec": "술집", "sub": "일본식주점(사시미)", "addr": "경남 진주시 동진로38번길 11-1 1층", "hours": "화~일 18:00~01:00 (카카오맵 목록)", "price": "모둠 사시미 43,000원, 토리나베 24,000원 (카카오맵 메뉴)", "parking": "카카오맵: 가게 앞 2대 정도 협소, 인근 아주스타타워·일호광장 주차장 이용 가능", "pk": "있음(2대 내외)", "raw": true, "visited": true, "kakao": "https://place.map.kakao.com/696861539", "blurb": "카카오맵 평점 5.0 (169건).", "h": {"d": [1, 2, 3, 4, 5, 6], "o": "18:00", "c": "01:00", "br": null}, "bar": "heavy", "lm": false}, "hadae-patbingsu": {"name": "하대동팥빙수", "sec": "카페", "sub": "빙수 디저트카페", "addr": "경남 진주시 도동로232번길 17 1층", "hours": "화~일 12:00~18:00 (카카오맵 목록)", "price": "팥빙수 5,500원, 녹차빙수 6,000원 (카카오맵 메뉴)", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/984431240", "blurb": "카카오맵 평점 4.7 (51건), 블로그 197건.", "h": {"d": [1, 2, 3, 4, 5, 6], "o": "12:00", "c": "18:00", "br": null}, "lm": false}, "mihobibi": {"name": "미호비비", "sec": "맛집", "sub": "중식(동파육)", "addr": "경남 진주시 도동로231번길 9 1층", "hours": "화·수·목·일 17:30~01:00 (카카오맵 목록)", "price": "연잎 동파육(소) 36,000원, 레몬 크림새우(소) 18,000원 (카카오맵 메뉴)", "parking": "카카오맵: 무료", "pk": "있음(카카오맵 표시, 확인 필요)", "raw": false, "visited": true, "kakao": "https://place.map.kakao.com/1815799164", "blurb": "카카오맵 평점 4.3 (14건), 블로그 237건. 저녁 위주.", "h": {"d": [1, 2, 3, 6], "o": "17:30", "c": "01:00", "br": null}, "lm": false}, "seungseung-brewery": {"name": "승승양조", "sec": "술집", "sub": "요리주점", "addr": "경남 진주시 도동로248번길 6 1층", "closed": "일요일 (카카오맵 목록)", "price": "항정보쌈한상 28,000원, 김부각육회 22,000원 (카카오맵 메뉴)", "parking": "카카오맵: 가게 앞 2대 무료, 인근 공용주차장 확인 권장", "pk": "있음(2대)", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/934525981", "h": {"d": [0, 1, 2, 3, 4, 5], "o": null, "c": null, "br": null}, "bar": "heavy", "lm": false}, "megabox-jinju-jungan": {"name": "메가박스 진주(중안)", "sec": "놀거리", "sub": "영화관", "play": "영화·공연", "addr": "경남 진주시 진양호로 521", "parking": "카카오맵: 무료", "pk": "있음(카카오맵 표시, 확인 필요)", "raw": false, "visited": true, "kakao": "https://place.map.kakao.com/708428877", "blurb": "중안동에 있는 메가박스 지점.", "lm": false}, "yakitori-aoi": {"name": "야끼토리 아오이", "sec": "맛집", "sub": "야키토리(일본식 닭꼬치)", "addr": "경남 진주시 진주대로1032번길 6 1층", "hours": "매일 12:00~21:30, 휴게 15:00~17:30 (카카오맵 목록)", "price": "야키토리동 13,500원, 꼬치 3,000~3,500원 (카카오맵 메뉴)", "raw": false, "visited": true, "kakao": "https://place.map.kakao.com/570968133", "blurb": "숯불 닭꼬치집. 카카오맵 평점 4.1 (52건).", "h": {"d": [0, 1, 2, 3, 4, 5, 6], "o": "12:00", "c": "21:30", "br": ["15:00", "17:30"]}, "lm": false}, "heya": {"name": "헤야", "sec": "카페", "sub": "카페", "addr": "경남 진주시 진주성로 10-3 1층", "closed": "화요일 (카카오맵 목록, 화요일 미표시)", "price": "인절미·말차 도라야끼 4,000원, 오레오라떼 6,000원 (카카오맵 메뉴)", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/1531794832", "blurb": "카카오맵 소개: 지브리 감성 아늑한 카페, 프라이빗룸. 카카오맵 태그: 감성카페, 보드게임, 일본식디저트. 카카오맵 평점 4.7 (11건).", "h": {"d": [0, 2, 3, 4, 5, 6], "o": null, "c": null, "br": null}, "lm": false}, "jinjuseong": {"name": "진주성 (촉석루)", "sec": "산책·관광", "sub": "성곽·산책", "addr": "경상남도 진주시 남강로 626", "hours": "하절기(3~10월) 05:00~23:00, 동절기(11~2월) 05:00~22:00", "raw": false, "visited": false, "blurb": "둘레 약 1,760m 성곽을 따라 걷는 산책로와 촉석루가 있고, 밤에는 조명이 켜진다. 성곽 관람에 1~2시간 정도 걸린다.", "h": {"d": [0, 1, 2, 3, 4, 5, 6], "o": "05:00", "c": "22:00", "br": null}, "lm": true}, "le-montreux": {"name": "르몽트뢰 (Le Montreux)", "sec": "술집", "sub": "LP바·재즈바", "addr": "경상남도 진주시 진주대로1032번길 3-1 (동성동)", "raw": false, "visited": false, "blurb": "LP 음악을 트는 바. 리뷰에 \"낮엔 커피, 밤엔 술을 파는 재즈바\"라는 설명과 음향이 좋다는 평이 많다. \"소리가 커서 대화가 어렵다\"는 리뷰도 있어 대화 위주 데이트에는 맞지 않을 수 있다.", "menu": ["위스키(보틀 5만~15만 원, 폴레 메뉴판 기준)", "하이볼", "내추럴 와인(잔)"], "bar": "light", "lm": false}, "lotte-mbcine-jinju": {"name": "롯데시네마 엠비씨네진주", "sec": "놀거리", "sub": "영화관", "play": "영화·공연", "addr": "경상남도 진주시 가호로 13 (MBC경남 진주)", "parking": "카카오맵: 지하·지상 주차장, 상영 티켓 등록 시 3~4시간 무료", "pk": "있음(티켓 등록 시 무료)", "raw": false, "visited": true, "kakao": "https://place.map.kakao.com/909440993", "blurb": "MBC경남 진주 건물에 있는 영화관.", "lm": false}, "la-tulip": {"name": "라튤립", "sec": "카페", "sub": "디저트카페(크로플)", "addr": "경남 진주시 강변길 20 1층", "price": "아메리카노 4,500원, 말차라떼 6,000원 (카카오맵 메뉴)", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/1207923203", "blurb": "카카오맵 소개: 크로플 명소, 노키즈존. 카카오맵 평점 4.6 (20건).", "lm": false}, "eunanjae": {"name": "은안재", "sec": "카페", "sub": "한옥 디저트카페", "addr": "경상남도 진주시 망경북길 28-4 1층", "parking": "주차 불가 (폴레 표시)", "pk": "없음", "raw": false, "visited": true, "kakao": "https://place.map.kakao.com/1941841377", "blurb": "한옥 디저트카페. 카카오맵 태그: 한옥카페, 주택개조카페, 애견동반카페, 노키즈존. 카카오맵 평점 4.3 (54건), 블로그 237건.", "menu": ["단호박빙수 14,000원", "인절미 쑥치즈케이크 7,000원", "망경동라떼 7,000원", "아메리카노 4,500원"], "lm": false}, "mulbit-naru": {"name": "물빛나루쉼터", "sec": "산책·관광", "sub": "남강 산책로·유람선", "addr": "경남 진주시 망경로 195", "parking": "카카오맵: 남강유등전시관 및 맞은편 무료 공영주차장", "pk": "있음(인근 무료 공영)", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/1009842401", "blurb": "카카오맵 태그: 산책로, 유람선, 포토존. 카카오맵 평점 4.9 (17건).", "lm": true}, "chupt": {"name": "처프트", "sec": "맛집", "sub": "양식", "addr": "경남 진주시 강남로201번길 9 1층", "hours": "매일 11:30~21:00, 휴게 15:00~17:30 (카카오맵)", "price": "초당옥수수뇨끼 15,000원, 뽈뽀먹물리조또 20,000원 (카카오맵 메뉴)", "parking": "카카오맵: 근처 공영주차장 유료", "pk": "없음(근처 공영 유료)", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/763828996", "blurb": "경남문화예술회관 앞 양식당. 카카오맵 태그: 데이트코스, 소개팅. 카카오맵 평점 3.5 (27건), 블로그 277건. 리뷰에 가격이 비싸다·주말 점심 시끄럽다는 의견 있음.", "h": {"d": [0, 1, 2, 3, 4, 5, 6], "o": "11:30", "c": "21:00", "br": ["15:00", "17:30"]}, "lm": false}, "louis13-gongbang": {"name": "루이13공방", "sec": "놀거리", "sub": "향수·캔들·부케 공방", "play": "공방·체험", "addr": "경남 진주시 도동천로 165-1 2층", "raw": false, "visited": true, "kakao": "https://place.map.kakao.com/1727591272", "blurb": "카카오맵 태그: 향수공방, 향수원데이, 캔들공방, 원데이클래스. 카카오맵 메뉴는 부케 보존 상품(6만~20만 원) 위주.", "lm": false}, "node-cafe": {"name": "노드", "sec": "맛집", "sub": "양식 + 카페(커피·디저트)", "addr": "경남 진주시 대신로 313 1층", "raw": false, "visited": true, "kakao": "https://place.map.kakao.com/869847287", "blurb": "카카오맵 태그: 대형카페, 데이트코스, 브런치카페, 소개팅. 카카오맵 평점 4.3 (19건).", "team": "양식 먹으러 여러 번 방문. 대체로 다 맛있고 시설 깔끔, 분위기 괜찮음", "lm": false}, "cafe-and-books": {"name": "카페앤북스", "sec": "놀거리", "sub": "만화카페", "play": "룸카페·프라이빗", "addr": "경남 진주시 진주대로500번길 9-1 신영빌딩 2층", "closed": "일요일 (카카오맵 목록)", "price": "일반 종일이용권 15,000원 (카카오맵 메뉴)", "parking": "카카오맵: 무료", "pk": "있음(카카오맵 표시, 확인 필요)", "raw": false, "visited": true, "kakao": "https://place.map.kakao.com/2132191993", "blurb": "만화카페. 태그에 진주룸카페·보드게임 포함. 카카오맵 평점 4.9 (18건).", "h": {"d": [0, 1, 2, 3, 4, 5], "o": null, "c": null, "br": null}, "lm": false}, "dohye-gongbang": {"name": "도혜공방", "sec": "놀거리", "sub": "공방(도자기·반지·은공예)", "play": "공방·체험", "addr": "경남 진주시 진주대로 536 3층", "hours": "화~일 10:30~18:00 (카카오맵 목록)", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/743999330", "blurb": "카카오맵 태그: 진주반지공방, 도자기공방, 원데이클래스, 진주데이트.", "h": {"d": [1, 2, 3, 4, 5, 6], "o": "10:30", "c": "18:00", "br": null}, "lm": false}, "stickerz-gnu": {"name": "스티커즈 경상대점", "sec": "놀거리", "sub": "즉석사진", "play": "사진·포토부스", "addr": "경남 진주시 진주대로 518 1층 104호", "hours": "24시간 (카카오맵 목록)", "price": "클래식 스티커 6,000원 (카카오맵 메뉴)", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/1065918585", "blurb": "포에틱시너리와 같은 건물 1층. 카카오맵 평점 5.0 (11건).", "lm": false}, "odt": {"name": "오디티 (Ordinary Down Town)", "sec": "카페", "sub": "놀거리 카페", "addr": "경남 진주시 가좌길64번길 3-1 1층", "hours": "매일 11:30~24:00 (카카오맵 목록)", "price": "아메리카노 4,500원, 수제 바닐라라떼 5,500원 (카카오맵 메뉴)", "parking": "카카오맵: 매장 앞 주차 가능", "pk": "있음(매장 앞)", "raw": false, "visited": true, "kakao": "https://place.map.kakao.com/329570124", "blurb": "다트, 그림 그리기 같은 가벼운 할거리가 있고 분위기가 좋으며 디저트가 맛있는 카페 (팀 평가).", "h": {"d": [0, 1, 2, 3, 4, 5, 6], "o": "11:30", "c": "24:00", "br": null}, "lm": false}, "bellavita": {"name": "벨라비타", "sec": "카페", "sub": "카페", "addr": "경남 김해시 대동면 동남로1번길 34 1~3층", "hours": "매일 10:30~21:30", "price": "브라운치즈라떼 7,200원", "parking": "카카오맵: 무료", "pk": "있음(카카오맵 표시)", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/846646061", "blurb": "카카오맵 소개: \"낙동강 뷰 품은 여유 카페\". 카카오맵 태그: 낙동강카페, 대형카페, 루프탑, 브런치. 카카오맵 평점 4.4 (42건), 블로그 235건.", "h": {"d": [0, 1, 2, 3, 4, 5, 6], "o": "10:30", "c": "21:30", "br": null}, "lm": false}, "pause-soom": {"name": "파우제&숨", "sec": "카페", "sub": "카페", "addr": "경남 김해시 대동면 동남로41번길 94", "hours": "화~일 10:30~21:30", "price": "아메리카노 5,400원, 크리미흑임자라떼 7,000원", "parking": "카카오맵: 매장 앞 전용 주차장, 공간은 부족한 편", "pk": "있음(부족)", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/1567492235", "blurb": "유럽풍 정원·식물원 카페(카카오맵 요약). 카카오맵 평점 4.3 (122건), 블로그 250건.", "h": {"d": [1, 2, 3, 4, 5, 6], "o": "10:30", "c": "21:30", "br": null}, "lm": false}, "daedong-eco-park": {"name": "대동생태체육공원", "sec": "산책·관광", "sub": "관광지", "addr": "경남 김해시 대동면 동남로 234-2", "parking": "카카오맵에 별도 \"대동생태체육공원 주차장\" 등록(조눌리 130-1)", "pk": "있음(공원 주차장)", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/89107591", "blurb": "카카오맵 태그: 산책로, 생태공원, 코스모스, 핑크뮬리명소. 카카오맵 평점 4.2 (13건). 계절(가을 꽃) 영향 큼.", "lm": true}, "nakdong-railpark": {"name": "김해낙동강레일파크", "sec": "놀거리", "sub": "레일바이크", "play": "스포츠·액티비티", "addr": "경상남도 김해시 생림면 마사로473번길 41", "hours": "레일바이크 4~10월 09:30~18:00, 11~3월 09:30~17:00 (점검 12:00~13:00, 1시간 전 발권 마감)", "closed": "매월 마지막 주 월요일", "parking": "무료 주차", "raw": false, "visited": false, "blurb": "낙동강 철교 위를 달리는 레일바이크(약 30분)와 와인동굴, 열차카페가 있다. 네이버 예약이나 당일 방문으로 이용한다.", "h": {"d": [0, 1, 2, 3, 4, 5, 6], "o": "09:30", "c": "17:00", "br": ["12:00", "13:00"]}, "lm": true}, "masa-brunch": {"name": "마사 브런치 카페", "sec": "카페", "sub": "카페", "addr": "경남 김해시 생림면 마사로 439 1~3층", "hours": "토·일 10:30~20:00 (카카오맵 목록)", "parking": "카카오맵: 무료", "pk": "있음(카카오맵 표시)", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/1099458354", "blurb": "카카오맵 태그: 낙동강카페, 김해데이트, 브런치카페. 카카오맵 소개: \"조랑말과 함께하는 힐링 브런치\". 낙동강레일파크(마사로473번길) 근처.", "h": {"d": [5, 6], "o": "10:30", "c": "20:00", "br": null}, "lm": false}, "hwanggeum-myeongtae": {"name": "황금명태본가 (삼계동)", "sec": "맛집", "sub": "명태조림", "addr": "경남 김해시 해반천로144번길 17-13 1층", "hours": "매일 10:50~21:30", "price": "모듬생선구이(소)·가오리조림(소) 27,000원 등", "parking": "카카오맵: 인근 용천사우나 주차장, 수리공원 옆 공용주차장", "pk": "없음(인근)", "raw": false, "visited": true, "station": "장신대역(도보 449m)", "kakao": "https://place.map.kakao.com/916304261", "blurb": "팀 추천(진짜 맛있고 유명). 카카오맵 평점 3.9 (19건).", "h": {"d": [0, 1, 2, 3, 4, 5, 6], "o": "10:50", "c": "21:30", "br": null}, "lm": false}, "bingsudang-samgye": {"name": "빙수당 삼계점", "sec": "카페", "sub": "카페", "addr": "경남 김해시 해반천로144번길 29-10 1층 103호", "hours": "매일 12:00~24:00", "price": "팥빙수 14,900원", "raw": false, "visited": true, "kakao": "https://place.map.kakao.com/86377325", "blurb": "빙수 카페. 카카오맵 평점 4.7 (6건).", "h": {"d": [0, 1, 2, 3, 4, 5, 6], "o": "12:00", "c": "24:00", "br": null}, "lm": false}, "checkmate-boardgame": {"name": "체크메이트 보드게임카페", "sec": "놀거리", "sub": "놀이·체험", "play": "보드게임·게임", "addr": "경남 김해시 해반천로168번길 38 203호", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/1433225338", "blurb": "카카오맵 평점 3.7 (3건).", "lm": false}, "photoism-samgye": {"name": "포토이즘박스 김해삼계점", "sec": "놀거리", "sub": "놀이·체험", "play": "사진·포토부스", "addr": "경남 김해시 해반천로144번길 26-1 1층", "hours": "24시간", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/1009514302", "lm": false}, "bueok-samgye": {"name": "부엌", "sec": "술집", "sub": "퓨전 양식 펍", "addr": "경남 김해시 해반천로144번길 29-39 1층", "closed": "월·일요일", "price": "하몽 플레이트 26,000원", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/27571944", "blurb": "카카오맵 태그: 비스트로, 분위기좋은. 카카오맵 평점 5.0 (4건).", "h": {"d": [1, 2, 3, 4, 5], "o": null, "c": null, "br": null}, "bar": "light", "lm": false}, "tsukoi": {"name": "츠코이", "sec": "술집", "sub": "일본식 주점", "addr": "경남 김해시 해반천로168번길 12-9 1층", "hours": "매일 18:00~01:00", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/2097221733", "blurb": "카카오맵 평점 4.8 (5건).", "h": {"d": [0, 1, 2, 3, 4, 5, 6], "o": "18:00", "c": "01:00", "br": null}, "bar": "heavy", "lm": false}, "ott-private": {"name": "오티티프라이빗 김해점", "sec": "놀거리", "sub": "놀이·체험", "play": "룸카페·프라이빗", "addr": "경남 김해시 내외중앙로 44 5층", "hours": "24시간", "price": "시간대별 13,000~32,000원(카카오맵 메뉴)", "parking": "카카오맵: 건물 주차 불가, 근처 공영주차장 24시간", "pk": "없음(공영)", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/631782881", "blurb": "프라이빗 닌텐도 게임룸.", "team": "직접 가보진 않았지만, 지나가며 자주 본 곳이에요. 지인이 다녀온 적도 있어요.", "lm": false}, "monster-boardgame": {"name": "몬스터보드게임카페", "sec": "놀거리", "sub": "놀이·체험", "play": "보드게임·게임", "addr": "경남 김해시 내외중앙로 50 5층", "raw": false, "visited": true, "kakao": "https://place.map.kakao.com/1221508575", "blurb": "카카오맵 평점 2.8 (5건).", "lm": false}, "yakitori-roman": {"name": "야키토리로만 김해내외동점", "sec": "술집", "sub": "야키토리", "addr": "경남 김해시 함박로119번길 11 1층", "hours": "매일 18:00~01:00", "price": "코스 세트 12,400원·17,400원", "parking": "카카오맵: 전용 없음, 내외동 공영주차장", "pk": "없음(공영)", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/1863145743", "blurb": "카카오맵 평점 4.3 (4건).", "team": "직접 가보진 않았지만, 지나가며 자주 본 곳이에요. 지인이 다녀온 적도 있어요.", "h": {"d": [0, 1, 2, 3, 4, 5, 6], "o": "18:00", "c": "01:00", "br": null}, "bar": "heavy", "lm": false}, "denwes": {"name": "덴웨스", "sec": "맛집", "sub": "이탈리안", "addr": "경남 김해시 봉황대안길 40 1층", "hours": "수~일 11:30~21:00", "price": "까르보나라 15,000원, 살치살스테이크 34,000원", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/1196121814", "blurb": "수제 라구파스타(카카오맵 요약). 카카오맵 평점 4.0 (49건), 블로그 415건.", "team": "직접 가보진 않았지만, 지나가며 자주 본 곳이에요. 지인이 다녀온 적도 있어요.", "h": {"d": [2, 3, 4, 5, 6], "o": "11:30", "c": "21:00", "br": null}, "lm": false}, "cafe-tangja": {"name": "카페탱자", "sec": "카페", "sub": "카페", "addr": "경남 김해시 봉황대길 58-5 나동 1층", "hours": "매일 12:00~22:00", "price": "아메리카노 4,000원, 말차라테 6,000원", "parking": "카카오맵: 근처 공영주차장, 카카오T 주차장 1시간 무료 지원", "pk": "없음(공영·지원)", "raw": false, "visited": false, "station": "봉황역", "kakao": "https://place.map.kakao.com/266115535", "blurb": "한옥과 정원이 어우러진 카페. 카카오맵 태그: 한옥카페, 야외테라스, 수제청. 카카오맵 평점 4.6 (26건).", "team": "직접 가보진 않았지만, 지나가며 자주 본 곳이에요. 지인이 다녀온 적도 있어요.", "h": {"d": [0, 1, 2, 3, 4, 5, 6], "o": "12:00", "c": "22:00", "br": null}, "lm": false}, "dartagnan": {"name": "달타냥", "sec": "술집", "sub": "위스키바", "addr": "경남 김해시 분성로288번길 21-9 1층", "hours": "월·목~일 18:00~02:00", "price": "타파스 10,000~12,000원, 위스키 잔 10,000원~", "parking": "카카오맵: 무료", "pk": "있음(카카오맵 표시)", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/1667053511", "blurb": "카카오맵 태그: 김해봉리단길술집, 위스키바. 카카오맵 평점 5.0 (2건).", "team": "직접 가보진 않았지만, 지나가며 자주 본 곳이에요. 지인이 다녀온 적도 있어요.", "h": {"d": [0, 3, 4, 5, 6], "o": "18:00", "c": "02:00", "br": null}, "bar": "light", "lm": false}, "lotte-gimhae-buwon": {"name": "롯데시네마 김해부원", "sec": "놀거리", "sub": "영화관", "play": "영화·공연", "addr": "경상남도 김해시 김해대로 2352 아이스퀘어 3층", "parking": "영화 관람 시 3시간 무료(3층 로비 태블릿에서 차량번호 등록)", "raw": false, "visited": true, "station": "부원역(김해대로 2350, 영화관 2352 바로 옆)", "kakao": "https://place.map.kakao.com/24767314", "blurb": "아이스퀘어몰 3층의 7개 관 영화관. 아이스퀘어몰 안에 있다.", "lm": false}, "ohiruten": {"name": "오히루텐", "sec": "맛집", "sub": "일식(텐동)", "addr": "경남 김해시 봉황대길 50 1층", "hours": "매일 11:00~20:30", "price": "오히루 텐동 9,000원, 에비 텐동 13,000원", "parking": "카카오맵: 근처 임시·공영주차장", "pk": "없음(공영)", "raw": false, "visited": false, "wait": "블로그 2,596건(팀 기준: 리뷰 2,000건 이상이면 웨이팅 가능성 높음)", "station": "봉황역", "kakao": "https://place.map.kakao.com/263453199", "blurb": "텐동 전문. 카카오맵 평점 4.1 (88건), 블로그 2,596건.", "team": "직접 가보진 않았지만, 지나가며 자주 본 곳이에요. 지인이 다녀온 적도 있어요.", "h": {"d": [0, 1, 2, 3, 4, 5, 6], "o": "11:00", "c": "20:30", "br": null}, "lm": false}, "duckle": {"name": "덕클 (DUCKLE)", "sec": "맛집", "sub": "중화·아시안", "addr": "경상남도 김해시 봉황대안길 36", "raw": false, "visited": true, "blurb": "중화요리와 아시안 음식을 내는 봉리단길 식당. 팀 평가로는 인테리어가 트렌디하고 가격이 적당했다.", "menu": ["마파두부", "유린기류 튀김 요리", "볶음밥"], "lm": false}, "cgv-gimhae": {"name": "CGV 김해", "sec": "놀거리", "sub": "영화관", "play": "영화·공연", "addr": "경상남도 김해시 내외중앙로 137 휴앤락몰 4층 (내동)", "parking": "야외 주차장, 영화 관람 시 4시간 무료(티켓판매기 인증), 초과 30분당 1,500원", "raw": false, "visited": true, "station": "연지공원역(도보 1.2km)", "kakao": "https://place.map.kakao.com/8551815", "blurb": "내동 휴앤락몰의 영화관. 4DX관과 커플석(SWEETBOX)이 있다.", "lm": false}, "dohyungmin": {"name": "도형민식당 김해내외점", "sec": "맛집", "sub": "이탈리안", "addr": "경남 김해시 경원로73번길 9 1층 109호", "hours": "화~일 11:30~20:00", "price": "꽃게 크림 파스타 13,900원, 살치살 스테이크 22,900원", "parking": "카카오맵: 유료(주차빌딩)", "pk": "있음(유료)", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/1049071829", "blurb": "카카오맵 평점 4.3 (15건), 블로그 938건.", "team": "직접 가보진 않았지만, 지나가며 자주 본 곳이에요. 지인이 다녀온 적도 있어요.", "h": {"d": [1, 2, 3, 4, 5, 6], "o": "11:30", "c": "20:00", "br": null}, "lm": false}, "yeonji-park": {"name": "김해연지공원", "sec": "산책·관광", "sub": "공원", "addr": "경상남도 김해시 내동 106-1", "hours": "연중무휴 상시 개방. 음악분수 3~10월 20:00~20:40 (월·목·우천 시 미운영)", "parking": "카카오맵: 연지공원 공영주차장(24시간) 등록", "pk": "있음(공영)", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/8014478", "blurb": "음악분수가 있는 도심 공원. 봄 튤립·벚꽃, 잔디밭 피크닉, 그늘진 산책로가 있다.", "lm": true}, "sagye": {"name": "사계", "sec": "카페", "sub": "카페", "addr": "경남 김해시 김해대로2315번길 26-7", "hours": "매일 12:00~20:50", "price": "수플레팬케이크 14,000원", "raw": false, "visited": true, "kakao": "https://place.map.kakao.com/320761634", "blurb": "수플레 팬케이크 카페. 카카오맵 태그: 데이트코스. 카카오맵 평점 4.2 (42건), 블로그 237건.", "h": {"d": [0, 1, 2, 3, 4, 5, 6], "o": "12:00", "c": "20:50", "br": null}, "lm": false}, "nichinichi": {"name": "니치니치커피샵", "sec": "카페", "sub": "카페", "addr": "경남 김해시 봉황대길 30-1 1층", "hours": "화~일 12:00~22:00", "price": "바니치라떼 6,000원", "parking": "카카오맵: 가게 앞 4대 정도", "pk": "있음(4대)", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/1776703234", "blurb": "일본 감성 카페, 노키즈존. 블로그 216건.", "team": "직접 가보진 않았지만, 지나가며 자주 본 곳이에요. 지인이 다녀온 적도 있어요.", "h": {"d": [1, 2, 3, 4, 5, 6], "o": "12:00", "c": "22:00", "br": null}, "lm": false}, "godongjip": {"name": "고동집", "sec": "카페", "sub": "카페", "addr": "경남 김해시 가락로23번길 40 1층", "closed": "화요일(목록 기준)", "price": "아메리카노 4,000원, 아인슈페너 5,500원", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/1571773749", "blurb": "카카오맵 태그: 떡카페, 디저트카페, 분위기좋은. 카카오맵 평점 4.8 (15건).", "team": "직접 가보진 않았지만, 지나가며 자주 본 곳이에요. 지인이 다녀온 적도 있어요.", "h": {"d": [0, 2, 3, 4, 5, 6], "o": null, "c": null, "br": null}, "lm": false}, "bambi-gonggi": {"name": "밤비공기", "sec": "카페", "sub": "카페", "addr": "경남 김해시 가락로23번길 32 1층", "closed": "일요일", "price": "롱블랙 3,800원", "parking": "카카오맵: 봉리단길 공영주차장", "pk": "없음(공영)", "raw": false, "visited": true, "kakao": "https://place.map.kakao.com/1546927654", "blurb": "카카오맵 태그: 수제디저트, 로스팅전문. 카카오맵 평점 4.5 (34건).", "h": {"d": [0, 1, 2, 3, 4, 5], "o": null, "c": null, "br": null}, "lm": false}, "tog-coffee": {"name": "토그커피샵", "sec": "카페", "sub": "카페", "addr": "경남 김해시 김해대로2283번길 30 1층", "hours": "화~일 12:00~21:00", "price": "샤베토 6,500원", "parking": "카카오맵: 무료", "pk": "있음(카카오맵 표시)", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/471598568", "blurb": "카카오맵 태그: 봉리단길카페, 감성카페, 애견동반. 카카오맵 평점 4.8 (12건), 블로그 212건.", "h": {"d": [1, 2, 3, 4, 5, 6], "o": "12:00", "c": "21:00", "br": null}, "lm": false}, "hey-green": {"name": "헤이그린", "sec": "카페", "sub": "카페", "addr": "경남 김해시 김해대로2324번길 28-10 1층", "hours": "매일 10:00~22:00", "price": "시나몬라떼 6,500원", "parking": "카카오맵: 전용주차장, 맞은편 주차장 2시간 무료", "pk": "있음", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/235459566", "blurb": "대형카페, 모찌빵(카카오맵 요약). 블로그 298건.", "h": {"d": [0, 1, 2, 3, 4, 5, 6], "o": "10:00", "c": "22:00", "br": null}, "lm": false}, "elwoody": {"name": "엘우디", "sec": "맛집", "sub": "양식", "addr": "경남 김해시 봉황대길 47 1층", "closed": "일요일", "price": "토마토 파스타 17,000원", "parking": "카카오맵: 자체 주차 없음, 근처 공영주차장", "pk": "없음(공영)", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/1957274333", "blurb": "카카오맵 태그: 데이트코스, 소개팅. 카카오맵 평점 4.5 (22건).", "team": "직접 가보진 않았지만, 지나가며 자주 본 곳이에요. 지인이 다녀온 적도 있어요.", "h": {"d": [0, 1, 2, 3, 4, 5], "o": null, "c": null, "br": null}, "lm": false}, "bistro-bongridan": {"name": "비스트로봉리단", "sec": "맛집", "sub": "양식(비스트로)", "addr": "경남 김해시 봉황대길 52-1 1층", "price": "알리오 올리오 11,900원", "parking": "카카오맵: 근처 공영·유료 주차장", "pk": "없음(공영)", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/136121949", "blurb": "카카오맵 태그: 데이트코스, 소개팅, 비스트로. 카카오맵 평점 4.8 (19건).", "team": "직접 가보진 않았지만, 지나가며 자주 본 곳이에요. 지인이 다녀온 적도 있어요.", "lm": false}, "kumine": {"name": "쿠미네 잡화점", "sec": "놀거리", "sub": "소품샵", "play": "소품샵·쇼핑", "addr": "경남 김해시 봉황대길 57 1층", "raw": false, "visited": true, "kakao": "https://place.map.kakao.com/1266053336", "blurb": "캐릭터 굿즈와 잡화를 파는 봉리단길 소품샵.", "lm": false}, "katsutadai": {"name": "카츠타다이", "sec": "놀거리", "sub": "문구·소품", "play": "소품샵·쇼핑", "addr": "경남 김해시 봉황대길 23 1층", "hours": "매일 13:00~20:00", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/1359121697", "blurb": "카카오맵 평점 4.7 (7건).", "h": {"d": [0, 1, 2, 3, 4, 5, 6], "o": "13:00", "c": "20:00", "br": null}, "lm": false}, "myeongwol": {"name": "복합문화공간 명월", "sec": "카페", "sub": "한옥 카페·복합문화공간", "addr": "경상남도 김해시 왕릉길 40 (봉황동, 김해한옥체험관 안)", "hours": "11:00~22:00 (마지막 주문 21:00)", "closed": "매주 월요일", "parking": "주차 불가 (출처 기준)", "pk": "없음", "raw": false, "visited": true, "kakao": "https://place.map.kakao.com/1371897579", "blurb": "김해한옥체험관 안의 카페 겸 복합문화공간. 1층은 카페와 지역 작가 수공예품 전시, 2층은 독서 쉼 공간이고 야외 수정원이 있다. 팀 평가로는 창 너머 한옥과 숲이 보이는 자리에서 대화하고 사진 찍기 좋았다.", "menu": ["명월", "허왕후", "수로왕", "커피", "티"], "h": {"d": [1, 2, 3, 4, 5, 6], "o": "11:00", "c": "22:00", "br": null}, "lm": true}, "hyanggi-jejakso": {"name": "향기제작소 김해점", "sec": "놀거리", "sub": "놀이·체험", "play": "공방·체험", "addr": "경남 김해시 가락로37번길 9 1층", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/76578670", "blurb": "카카오맵 태그: 향수공방, 캔들공방, 디퓨저만들기, 원데이클래스, 데이트코스. 블로그 141건.", "team": "직접 가보진 않았지만, 지나가며 자주 본 곳이에요. 지인이 다녀온 적도 있어요.", "lm": false}, "gongbang-wa": {"name": "공방와", "sec": "놀거리", "sub": "놀이·체험", "play": "공방·체험", "addr": "경남 김해시 가락로23번길 17 1층", "hours": "토·일 11:00~20:00 (목록)", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/1858397366", "blurb": "도자기 물레 체험, 원데이클래스(태그). 카카오맵 평점 1.0 (1건).", "team": "직접 가보진 않았지만, 지나가며 자주 본 곳이에요. 지인이 다녀온 적도 있어요.", "h": {"d": [5, 6], "o": "11:00", "c": "20:00", "br": null}, "lm": false}, "moyeora-boardgame": {"name": "모여라보드게임카페", "sec": "놀거리", "sub": "놀이·체험", "play": "보드게임·게임", "addr": "경남 김해시 가락로23번길 23-1 1층", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/345760653", "blurb": "카카오맵 평점 5.0 (7건).", "team": "직접 가보진 않았지만, 지나가며 자주 본 곳이에요. 지인이 다녀온 적도 있어요.", "lm": false}, "photosignature-bongridan": {"name": "포토시그니처 봉리단길점", "sec": "놀거리", "sub": "놀이·체험", "play": "사진·포토부스", "addr": "경남 김해시 봉황대길 54-1 1층", "hours": "24시간", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/640865818", "lm": false}, "river-boardgame": {"name": "리버보드게임카페", "sec": "놀거리", "sub": "놀이·체험", "play": "보드게임·게임", "addr": "경남 김해시 인제로169번길 22", "hours": "화~일 12:00~23:00", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/432489647", "h": {"d": [1, 2, 3, 4, 5, 6], "o": "12:00", "c": "23:00", "br": null}, "lm": false}, "photosignature-eobang": {"name": "포토시그니처 김해어방점", "sec": "놀거리", "sub": "놀이·체험", "play": "사진·포토부스", "addr": "경남 김해시 인제로188번길 6 1층", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/643738717", "lm": false}, "jangsu-donkatsu": {"name": "장수돈까스", "sec": "맛집", "sub": "돈까스", "addr": "경남 김해시 인제로 179", "hours": "매일 10:00~22:00", "raw": false, "visited": false, "kakao": "https://place.map.kakao.com/8054760", "blurb": "카카오맵 평점 4.7 (22건). 인제대 앞 상권.", "h": {"d": [0, 1, 2, 3, 4, 5, 6], "o": "10:00", "c": "22:00", "br": null}, "lm": false}}, "walk": {"poetic-scenery|gooddaygoodies": [207, 3], "poetic-scenery|xlane-bowling": [156, 2], "poetic-scenery|odt": [939, 15], "poetic-scenery|lotte-mbcine-jinju": [1400, 22], "poetic-scenery|la-tulip": [1800, 28], "lotte-mbcine-jinju|la-tulip": [611, 10], "chupt|eunanjae": [1400, 23], "chupt|yeonhoejip": [1200, 19], "chupt|jumping-battle": [1200, 18], "chupt|megabox-jinju-jungan": [1700, 28], "chupt|mulbit-naru": [2200, 34], "jumping-battle|yeonhoejip": [300, 5], "jumping-battle|hieol": [870, 13], "eunanjae|mulbit-naru": [944, 15], "hadae-patbingsu|mihobibi": [294, 5], "hadae-patbingsu|seungseung-brewery": [293, 4], "hadae-patbingsu|node-cafe": [950, 15], "hadae-patbingsu|louis13-gongbang": [1200, 19], "megabox-jinju-jungan|yakitori-aoi": [409, 6], "megabox-jinju-jungan|heya": [430, 8], "megabox-jinju-jungan|jinjuseong": [612, 11], "heya|jinjuseong": [416, 7], "heya|yakitori-aoi": [687, 11], "louis13-gongbang|node-cafe": [535, 8], "louis13-gongbang|mihobibi": [1100, 18], "ohiruten|cafe-tangja": [244, 4], "ohiruten|denwes": [189, 3], "ohiruten|hyanggi-jejakso": [246, 4], "ohiruten|dartagnan": [407, 6], "ohiruten|myeongwol": [782, 12], "ohiruten|lotte-gimhae-buwon": [821, 13], "cgv-gimhae|dohyungmin": [643, 11], "cgv-gimhae|yeonji-park": [1000, 17], "cgv-gimhae|ott-private": [1100, 19], "cgv-gimhae|yakitori-roman": [1200, 21], "yakitori-roman|ott-private": [167, 3], "yakitori-roman|monster-boardgame": [254, 4], "hwanggeum-myeongtae|bingsudang-samgye": [225, 4], "hwanggeum-myeongtae|checkmate-boardgame": [404, 6], "river-boardgame|photosignature-eobang": [227, 4]}, "station": {"ohiruten": ["봉황역", 648, 10], "cgv-gimhae": ["연지공원역", 1200, 21], "hwanggeum-myeongtae": ["장신대역", 449, 7], "river-boardgame": ["인제대역", 2400, 41]}, "asOf": "2026-11-08"};
+const PL=D.places;
+const LS='datecourse-demo-v1';
+const TYPES={
+  car:{label:'드라이브',long:'드라이브 데이트',color:'var(--peach)',icon:'car'},
+  drink:{label:'한잔',long:'한잔 데이트',color:'var(--lilac)',icon:'bar'},
+  movie:{label:'영화관',long:'영화관 데이트',color:'var(--mint)',icon:'movie'},
+  mood:{label:'감성',long:'감성 데이트',color:'var(--butter)',icon:'cafe'},
+  play:{label:'놀거리',long:'놀거리 데이트',color:'var(--pink)',icon:'game'}
+};
+const SEC={'맛집':['var(--peach)','food'],'카페':['var(--lilac)','cafe'],'술집':['var(--pink)','bar'],'산책·관광':['var(--butter)','walk'],'놀거리':['var(--mint)','game']};
+const PLAYS=[['영화·공연','영화·공연'],['공방·체험','공방·원데이'],['보드게임·게임','보드게임·오락실'],['사진·포토부스','포토부스'],['노래방','노래방'],['룸카페·프라이빗','룸카페·만화카페'],['스포츠·액티비티','볼링·액티비티'],['소품샵·쇼핑','소품샵·쇼핑']];
+const PLAYICON={'영화·공연':'movie','공방·체험':'craft','사진·포토부스':'camera','소품샵·쇼핑':'bag','스포츠·액티비티':'ball'};
+const TIMES={lunch:['점심',720],afternoon:['오후',840],late:['늦은 오후',960],evening:['저녁',1080]};
+const WD=['월','화','수','목','금','토','일'];
+const I={
+ food:'<path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 0-3 2.5-3 5.5S15 13 17 13v8"/>',
+ cafe:'<path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM17 10h1.5a2.5 2.5 0 0 1 0 5H17M8 3v3M12 3v3"/>',
+ bar:'<path d="M5 4h14l-7 8zM12 12v8M8 20h8"/>',
+ movie:'<path d="M3 9h18v11H3zM3 9l2.5-5 3 5 2.5-5 3 5 2.5-5 3 5"/>',
+ game:'<path d="M7 8h10a5 5 0 0 1 5 5v1a3 3 0 0 1-5.4 1.8L15.5 14h-7l-1.1 1.8A3 3 0 0 1 2 14v-1a5 5 0 0 1 5-5zM7.5 10.5v3M6 12h3M16 11h.01M18 13h.01"/>',
+ walk:'<path d="M3 20l6-10 4 6 2.5-3.5L21 20zM17 6.5a1.5 1.5 0 1 0 0-.01"/>',
+ car:'<path d="M3 17l2-7h14l2 7v3h-3v-2H6v2H3zM7 14h.01M17 14h.01M6 10l1-3h10l1 3"/>',
+ craft:'<path d="M4 20l9-9M13 4l7 7-3 3-7-7zM4 20h5"/>',
+ camera:'<path d="M3 8h4l2-3h6l2 3h4v11H3z"/><circle cx="12" cy="13" r="3.5"/>',
+ bag:'<path d="M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2"/>',
+ ball:'<circle cx="12" cy="12" r="9"/><path d="M9 8h.01M12 7h.01M11 10.5h.01"/>',
+ home:'<path d="M3 11l9-7 9 7v8a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+ route:'<circle cx="5" cy="18" r="2"/><circle cx="19" cy="6" r="2"/><path d="M7 18h7a3.5 3.5 0 0 0 0-7H10a3.5 3.5 0 0 1 0-7h7"/>',
+ star:'<circle cx="12" cy="10" r="6.5"/><path d="M8.5 15.5L6 22l6-2.5 6 2.5-2.5-6.5"/>',
+ book:'<rect x="3" y="4" width="18" height="15" rx="2.5"/><path d="M3 15l5-5 4 4 3-3 6 6"/>',
+ back:'<path d="M15 5l-7 7 7 7"/>', info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/>',
+ pin:'<path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+ arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>', check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>', plus:'<path d="M12 5v14M5 12h14"/>',
+ tune:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',
+ foot:'<path d="M7 20c0-4 1-6 3-8s2-4 2-6M14 20c0-3 1-4 3-5"/>', share:'<path d="M12 15V4M8 8l4-4 4 4M5 13v6h14v-6"/>'
+};
+const ic=(n,s=22,c='currentColor')=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]||I.pin}</svg>`;
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const today=()=>iso(new Date());
+const addDays=(n)=>{const d=new Date();d.setDate(d.getDate()+n);return iso(d)};
+const wdOf=s=>(new Date(s+'T00:00:00').getDay()+6)%7;
+const dlabel=s=>{const [y,m,d]=s.split('-');return `${+m}.${+d} ${WD[wdOf(s)]}`};
+const hm=t=>{t=((t%1440)+1440)%1440;return `${pad(Math.floor(t/60))}:${pad(t%60)}`};
+const mins=s=>{const [h,m]=s.split(':');return +h*60+ +m};
+const dist=m=>m>=1000?`${(m/1000).toFixed(1)}km`:`${m}m`;
+const walkOf=(a,b)=>D.walk[a+'|'+b]||D.walk[b+'|'+a]||null;
+const picon=p=>p.sec==='놀거리'?(PLAYICON[p.play]||'game'):SEC[p.sec][1];
+
+/* ---------- 상태 ---------- */
+const saved=(()=>{try{return JSON.parse(localStorage.getItem(LS))||{}}catch(e){return {}}})();
+const S={
+  city:saved.city==='김해'?'김해':'진주',
+  cond:Object.assign({date:today(),time:'afternoon',move:'walk',limit:1000,alc:'none',play:[],first:false,noRaw:false},saved.cond||{}),
+  diary:Array.isArray(saved.diary)?saved.diary:[],
+  type:'all', picks:{}, open:0, sheet:null
+};
+if(S.cond.date<today())S.cond.date=today();
+function save(){try{localStorage.setItem(LS,JSON.stringify({city:S.city,cond:S.cond,diary:S.diary}));return true}catch(e){return false}}
+
+/* ---------- 추천 로직 ---------- */
+function stay(p){if(p.sub==='영화관')return 150;if(p.play==='공방·체험')return 90;return {'맛집':80,'카페':60,'술집':90,'산책·관광':50,'놀거리':60}[p.sec]}
+function hoursCheck(p,date,t,d){
+  const h=p.h;if(!h)return null;
+  const wd=wdOf(date);
+  if(!h.d.includes(wd))return {lvl:'bad',msg:`${WD[wd]}요일 영업 정보가 없어요. 쉬는 날일 수 있어요`};
+  if(!h.o)return null;
+  let o=mins(h.o),c=mins(h.c);if(c<=o)c+=1440;
+  if(t<o)return {lvl:'warn',msg:`${h.o}에 열어요. 도착 예상은 ${hm(t)}`};
+  if(t>=c)return {lvl:'bad',msg:`${h.c==='24:00'?'자정':h.c}에 닫아요. 도착 예상은 ${hm(t)}`};
+  if(h.br){const b0=mins(h.br[0]),b1=mins(h.br[1]);if(t>=b0&&t<b1)return {lvl:'warn',msg:`${h.br[0]}~${h.br[1]} 휴게시간이에요`}}
+  if(t+d>c+20)return {lvl:'warn',msg:`${h.c==='24:00'?'자정':h.c} 마감이라 시간이 빠듯해요`};
+  return null;
+}
+function parkOf(p){if(p.pk&&p.pk.startsWith('없음'))return 'no';if((p.pk&&p.pk.startsWith('있음'))||(!p.pk&&p.parking&&!/불가/.test(p.parking)))return 'yes';return 'unknown'}
+function resolve(c,cond,picks,inner){
+  picks=picks||{};
+  const alc=cond.move==='car'?'none':cond.alc;
+  const r={c,stops:[],out:null,near:null,reasons:[],warn:[],score:0,alc};
+  if(c.car==='need'&&cond.move!=='car')r.out='차가 있어야 갈 수 있는 코스예요';
+  if((c.barCore||c.type==='drink')&&alc==='none')r.out=r.out||(cond.move==='car'?'한잔 코스라 운전하는 날에는 빠져요':'한잔 코스라 술을 안 마시는 날에는 빠져요');
+  c.stops.forEach((s,i)=>{
+    const all=[s.id,...s.alts];
+    const ok=all.filter(id=>{const p=PL[id];return !(cond.noRaw&&p.raw)&&!(p.sec==='술집'&&alc==='none')});
+    if(!ok.length){if(s.core&&!r.out)r.out=PL[s.id].raw?'날것이 주메뉴인 곳이 중심이에요':'술집이 중심인 코스예요';return}
+    let id=picks[i]&&ok.includes(picks[i])?picks[i]:null;
+    if(!id){
+      const pref=x=>{const p=PL[x];let v=x===s.id?1:0;if(p.play&&cond.play.includes(p.play))v+=2;if(p.bar&&p.bar===alc)v+=2;if(p.visited)v+=.4;const h=p.h;if(h&&!h.d.includes(wdOf(cond.date)))v-=3;return v};
+      id=ok.slice().sort((a,b)=>pref(b)-pref(a))[0];
+    }
+    r.stops.push({id,p:PL[id],slot:i,opt:s.opt,alts:ok.filter(x=>x!==id)});
+  });
+  if(r.stops.length<2&&!r.out)r.out='조건에 맞는 장소가 부족해요';
+  // 시간표
+  let t=TIMES[cond.time][1];
+  r.stops.forEach((st,i)=>{
+    if(i>0){
+      const prev=r.stops[i-1];const w=walkOf(prev.id,st.id);
+      const car=cond.move==='car'||c.car==='need';
+      if(w&&(!car||w[0]<=600)){st.leg={m:w[0],min:w[1]};t+=w[1]}
+      else if(car){const q=rtOf(prev.id,st.id,'car');if(q){st.leg={car:true,tm:q.m,tmin:q.min};t+=q.min}else{st.leg={car:true};t+=15}}
+      else{const q=rtOf(prev.id,st.id,'walk');if(q){st.leg={unknown:true,tm:q.m,tmin:q.min};t+=q.min}else{st.leg={unknown:true};t+=10}}
+    }
+    const hh=st.p.h;if(hh&&hh.o&&hh.d.includes(wdOf(cond.date))){const o=mins(hh.o);if(t<o&&o-t<=30)t=o}
+    st.t=t;st.d=stay(st.p);st.hc=hoursCheck(st.p,cond.date,t,st.d);t+=st.d;
+  });
+  r.end=t;
+  // 걷는 거리: 코스 안에서 잰 구간 중 가장 먼 두 곳
+  let mx=0,unk=0;
+  for(let a=0;a<r.stops.length;a++)for(let b=a+1;b<r.stops.length;b++){const w=walkOf(r.stops[a].id,r.stops[b].id);if(w)mx=Math.max(mx,w[0]);else unk++}
+  r.maxWalk=mx;r.unmeasured=unk;
+  // 점수와 이유
+  const ps=r.stops.map(s=>s.p);
+  if(cond.move==='walk'){
+    if(mx){r.walkLabel=unk?`잰 구간 중 가장 먼 곳 ${dist(mx)}`:`가장 먼 구간 ${dist(mx)}`;r.reasons.push(['plain',`${ic('foot',13)}${r.walkLabel}`]);r.score+=mx<=500?2:mx<=1000?1:0}
+    if(cond.limit&&mx>cond.limit&&!r.out)r.near=`걷는 거리가 ${dist(mx)}라 기준(${dist(cond.limit)})을 넘어요`;
+  }else{
+    const k=ps.filter(p=>parkOf(p)==='yes').length;
+    r.reasons.push([k===ps.length?'ok':'plain',`주차 확인 ${k}/${ps.length}곳`]);r.score+=2*k/ps.length;if(c.type==='car')r.score+=2;
+  }
+  const hits=[...new Set(ps.map(p=>p.play).filter(x=>x&&cond.play.includes(x)))];
+  hits.forEach(h=>{r.reasons.push(['ok',`${PLAYS.find(x=>x[0]===h)[1]} 포함`]);r.score+=3});
+  if(cond.play.length&&!hits.length)r.score-=1;
+  const bars=ps.filter(p=>p.sec==='술집');
+  if(alc!=='none'){
+    if(bars.length){r.score+=2;const m=bars.some(b=>b.bar===alc);if(m){r.score+=1.5;r.reasons.push(['ok',alc==='light'?'가볍게 한 잔 가능':'제대로 마시기 좋은 곳'])}}
+    if(c.type==='drink')r.score+=1;
+  }
+  if(cond.first){
+    if(c.type==='movie'||c.type==='mood'){r.score+=2;r.reasons.push(['ok','처음 만나는 날에 무난'])}
+    if(ps.some(p=>p.play==='룸카페·프라이빗'))r.score-=2;
+    if(bars.some(b=>b.bar==='heavy'))r.score-=1;
+  }
+  const v=ps.filter(p=>p.visited).length;
+  if(v){r.reasons.push(['plain',`팀이 가본 곳 ${v}곳`]);r.score+=v*.3}
+  r.visited=v;
+  r.stops.forEach(s=>{if(s.hc){r.warn.push(`${s.p.name}: ${s.hc.msg}`);r.score-=s.hc.lvl==='bad'?4:2}if(s.p.wait)r.warn.push(`${s.p.name}: 웨이팅이 있을 수 있어요`)});
+  r.issues=r.stops.filter(s=>s.hc).length;
+  if(!inner&&r.issues&&!r.out){
+    const cur=TIMES[cond.time][1];
+    const alt=Object.keys(TIMES).filter(k=>k!==cond.time).map(k=>({k,n:resolve(c,Object.assign({},cond,{time:k}),picks,true).issues})).filter(x=>x.n===0).sort((a,b)=>Math.abs(TIMES[a.k][1]-cur)-Math.abs(TIMES[b.k][1]-cur))[0];
+    if(alt)r.better=alt.k;
+  }
+  return r;
+}
+function ranked(){
+  const all=D.courses.filter(c=>c.city===S.city&&(S.type==='all'||c.type===S.type)).map(c=>resolve(c,S.cond));
+  const by=(a,b)=>b.score-a.score;
+  return {fit:all.filter(r=>!r.out&&!r.near).sort(by),near:all.filter(r=>!r.out&&r.near).sort(by),out:all.filter(r=>r.out)};
+}
+function condChips(){
+  const c=S.cond,a=[dlabel(c.date),TIMES[c.time][0],c.move==='car'?'차로':('걸어서'+(c.limit?` ${dist(c.limit)} 안`:''))];
+  if(c.move!=='car')a.push({none:'술 안 마셔요',light:'가볍게 한 잔',heavy:'제대로 한 잔'}[c.alc]);
+  c.play.forEach(p=>a.push(PLAYS.find(x=>x[0]===p)[1]));
+  if(c.first)a.push('처음 만나는 날');if(c.noRaw)a.push('날것 빼고');
+  return a;
+}
+
+/* ---------- 화면 조각 ---------- */
+function collage(r,cls){
+  const t=TYPES[r.c.type];
+  return `<div class="collage ${cls||''}" style="background:${t.color}">${r.stops.slice(0,cls==='sm'?3:4).map(s=>`<span class="tile">${ic(picon(s.p),cls==='sm'?20:26)}</span>`).join('')}</div>`;
+}
+function courseCard(r,i,big){
+  const t=TYPES[r.c.type];
+  const names=r.stops.map(s=>esc(s.p.name)).join(' → ');
+  const chips=r.reasons.slice(0,3).map(x=>`<span class="tag ${x[0]}">${x[1]}</span>`).join('')+(r.better?`<span class="tag warn">${TIMES[r.better][0]}에 가면 시간이 맞아요</span>`:r.warn.length?`<span class="tag warn">확인할 점 ${r.warn.length}</span>`:'');
+  if(big)return `<button class="card" data-go="c-${r.c.id}"><div style="position:relative">${collage(r)}<span class="rank">가장 잘 맞아요</span></div><div class="cbody"><span class="tag" style="background:${t.color}">${t.long} · ${esc(r.c.zone)}</span><p class="ctitle">${esc(r.c.title)}</p><p class="cstops">${names}</p><div class="reasons">${chips}</div></div></button>`;
+  return `<button class="card mini" data-go="c-${r.c.id}">${collage(r,'sm')}<div class="cbody"><span class="tag" style="background:${t.color}">${t.label} · ${esc(r.c.zone)}</span><p class="ctitle">${esc(r.c.title)}</p><p class="cstops">${names}</p><div class="reasons">${chips}</div></div></button>`;
+}
+function nav(cur){
+  const it=[['home','홈','home'],['courses','코스','route'],['stickers','스티커','star'],['diary','기록','book']];
+  return `<nav class="nav" aria-label="하단 메뉴"><div>${it.map(x=>`<a href="#${x[0]}" ${cur===x[0]?'aria-current="page"':''}>${ic(x[2],20)}${x[1]}</a>`).join('')}</div></nav>`;
+}
+function citySeg(){return `<div class="seg" role="group" aria-label="지역">${['진주','김해'].map(c=>`<button data-act="city" data-v="${c}" aria-pressed="${S.city===c}">${c}</button>`).join('')}</div>`}
+
+/* ---------- 홈 ---------- */
+function vHome(){
+  const all=D.courses.filter(c=>c.city===S.city);
+  const upcoming=S.diary.filter(e=>e.status==='plan').sort((a,b)=>a.date.localeCompare(b.date))[0];
+  const picks=all.map(c=>resolve(c,Object.assign({},S.cond,{move:c.car==='need'?'car':'walk',limit:0,alc:'light',play:[],first:false,noRaw:false}))).filter(r=>!r.out).sort((a,b)=>b.visited-a.visited).slice(0,2);
+  return `<div class="pad">
+  <header class="top"><span class="wordmark">데이트핏</span><div class="row">${citySeg()}<button class="iconbtn" data-act="info" aria-label="데이터 안내">${ic('info',20)}</button></div></header>
+  <section class="hero"><h1 class="display">오늘 우리,<br>어디 갈까?</h1><p class="sub">조건만 고르면 ${S.city}에서 동선이 맞는 코스를 골라드려요</p></section>
+  ${upcoming?`<button class="next" data-go="diary"><span class="grow"><small>다가오는 데이트 · ${dlabel(upcoming.date)}</small><br><b>${esc(upcoming.title)}</b></span>${ic('arrow',20)}</button>`:''}
+  <div style="margin-top:18px"><a class="cta" href="#plan">${ic('tune',20)}조건 고르고 추천받기</a></div>
+  <section class="sect"><h2>어떤 데이트?</h2><div class="types">${Object.entries(TYPES).map(([k,t])=>{const n=all.filter(c=>c.type===k).length;return `<button class="typecard" style="background:${t.color}" data-act="type" data-v="${k}"><span>${t.label}<small>코스 ${n}개</small></span>${ic(t.icon,24)}</button>`}).join('')}</div></section>
+  <section class="sect"><h2>팀이 직접 가본 곳이 많은 코스</h2><div class="list">${picks.map(r=>courseCard(r)).join('')}</div></section>
+  <p class="note">장소 정보는 2026년 11월 8일 카카오맵 기준이에요. 영업시간과 가격은 바뀔 수 있으니 가기 전에 확인해 주세요. <button data-act="info">데이터 안내 보기</button></p>
+  </div>${nav('home')}`;
+}
+
+/* ---------- 조건 ---------- */
+function vPlan(){
+  const c=S.cond,car=c.move==='car';
+  const sat=(()=>{const d=new Date();const n=(6-d.getDay()+7)%7;return addDays(n)})();
+  const dates=[[today(),'오늘'],[addDays(1),'내일'],[sat,'이번 토요일']].filter((x,i,a)=>a.findIndex(y=>y[0]===x[0])===i);
+  const R=ranked();const n=R.fit.length;
+  return `<div class="pad">
+  <header class="top"><a class="iconbtn" href="#home" aria-label="홈으로">${ic('back',20)}</a>${citySeg()}</header>
+  <h1 class="display" style="font-size:30px;margin-top:16px">어떤 하루로 할까?</h1>
+  <div>
+  <section class="q"><h2>언제 만나요</h2>
+    <div class="chips">${dates.map(d=>`<button class="chip" data-act="set" data-k="date" data-v="${d[0]}" aria-pressed="${c.date===d[0]}">${d[1]} <span style="opacity:.7">${dlabel(d[0])}</span></button>`).join('')}
+    <input class="dateinput" id="date-input" type="date" aria-label="날짜 직접 고르기" min="${today()}" value="${c.date}"></div>
+    <div class="chips" style="margin-top:10px">${Object.entries(TIMES).map(([k,v])=>`<button class="chip" data-act="set" data-k="time" data-v="${k}" aria-pressed="${c.time===k}">${v[0]} <span style="opacity:.7">${hm(v[1])}~</span></button>`).join('')}</div>
+    <p class="hint">고른 요일과 시간에 문 여는지 코스마다 확인해 드려요</p></section>
+  <section class="q"><h2>어떻게 다녀요</h2>
+    <div class="opt2"><button class="optcard" data-act="set" data-k="move" data-v="walk" aria-pressed="${!car}">걸어서<small>실제 도보 경로로 잰 거리</small></button><button class="optcard" data-act="set" data-k="move" data-v="car" aria-pressed="${car}">차 있어요<small>주차 정보를 같이 봐요</small></button></div>
+    ${car?'':`<div class="chips" style="margin-top:10px">${[[500,'500m 안'],[1000,'1km 안'],[2000,'2km 안'],[0,'상관없어요']].map(x=>`<button class="chip sm" data-act="set" data-k="limit" data-v="${x[0]}" aria-pressed="${c.limit===x[0]}">${x[1]}</button>`).join('')}</div><p class="hint">코스 안에서 가장 먼 두 곳 사이를 걷는 거리예요</p>`}</section>
+  <section class="q"><h2>술<small>${car?'운전하는 날은 술집이 빠져요':''}</small></h2>
+    <div class="${car?'dim':''}" style="display:flex;flex-direction:column;gap:8px" ${car?'aria-disabled="true"':''}>${[['none','안 마셔요',''],['light','가볍게 한 잔','칵테일·와인·위스키 바'],['heavy','제대로','주점·요리주점']].map(x=>`<button class="optrow" data-act="set" data-k="alc" data-v="${x[0]}" aria-pressed="${(car?'none':c.alc)===x[0]}" ${car?'tabindex="-1"':''}><span>${x[1]}<small>${x[2]}</small></span><span class="dot"></span></button>`).join('')}</div></section>
+  <section class="q"><h2>놀거리<small>여러 개 골라도 돼요</small></h2>
+    <div class="chips">${PLAYS.map(p=>`<button class="chip" data-act="play" data-v="${p[0]}" aria-pressed="${c.play.includes(p[0])}">${p[1]}</button>`).join('')}</div></section>
+  <section class="q" style="display:flex;flex-direction:column;gap:8px">
+    <button class="optrow" data-act="toggle" data-k="first" aria-pressed="${c.first}"><span>처음 만나는 날<small>영화·감성 코스를 먼저</small></span><span class="switch"></span></button>
+    <button class="optrow" data-act="toggle" data-k="noRaw" aria-pressed="${c.noRaw}"><span>날것은 빼주세요<small>회·사시미가 주메뉴인 곳</small></span><span class="switch"></span></button></section>
+  </div></div>
+  <div class="dock"><a class="cta" href="#courses">${n?`맞는 코스 ${n}개 보기`:'조건에 가까운 코스 보기'}${ic('arrow',20)}</a></div>`;
+}
+
+/* ---------- 코스 목록 ---------- */
+function vCourses(){
+  const R=ranked();
+  const tf=[['all','전체'],...Object.entries(TYPES).map(([k,t])=>[k,t.label])];
+  return `<div class="pad">
+  <header class="top"><h1 class="display" style="font-size:28px">${S.city} 코스</h1>${citySeg()}</header>
+  <button class="row" data-go="plan" style="margin-top:12px;width:100%;padding:10px 14px;border-radius:20px;background:var(--card);box-shadow:var(--shadow);text-align:left;min-height:52px">${ic('tune',20)}<span class="grow" style="font-size:13px;line-height:1.5">${condChips().map(esc).join(' · ')}</span><b style="font-size:13px;color:var(--link);white-space:nowrap">바꾸기</b></button>
+  <div class="scrollx" style="margin-top:12px">${tf.map(x=>`<button class="chip sm" data-act="type" data-v="${x[0]}" aria-pressed="${S.type===x[0]}">${x[1]}</button>`).join('')}</div>
+  ${R.fit.length?`<div class="list">${R.fit.map((r,i)=>courseCard(r,i,i===0)).join('')}</div>`:`<div class="empty"><b style="color:var(--ink)">지금 조건에 딱 맞는 코스가 없어요</b><br>걷는 거리나 놀거리 조건을 조금 풀어 보세요.<div style="margin-top:12px"><a class="cta ghost" href="#plan">조건 바꾸기</a></div></div>`}
+  ${R.near.length?`<section class="sect"><h2>조금만 더 걸으면</h2><div class="list">${R.near.map(r=>courseCard(r).replace('<div class="reasons">',`<div class="reasons"><span class="tag warn">${esc(r.near)}</span>`)).join('')}</div></section>`:''}
+  ${R.out.length?`<details class="out"><summary>조건에 안 맞아 빠진 코스 ${R.out.length}개</summary><ul>${R.out.map(r=>`<li><b>${esc(r.c.title)}</b><br>${esc(r.out)}</li>`).join('')}</ul></details>`:''}
+  </div>${nav('courses')}`;
+}
+
+/* ---------- 코스 상세 ---------- */
+function vDetail(id){
+  const c=D.courses.find(x=>x.id===id);if(!c)return vCourses();
+  const r=resolve(c,S.cond,S.picks[id]);const t=TYPES[c.type];
+  const car=S.cond.move==='car'||c.car==='need';
+  const st=c.station&&r.stops.map(s=>D.station[s.id]).find(Boolean);
+  const meta=[`${dlabel(S.cond.date)} ${hm(TIMES[S.cond.time][1])} 시작`,`약 ${Math.round((r.end-TIMES[S.cond.time][1])/30)/2}시간`];
+  if(!car&&r.maxWalk)meta.push(r.walkLabel||`가장 먼 구간 ${dist(r.maxWalk)}`);
+  if(car)meta.push('차로 이동');
+  if(st)meta.push(`${st[0]}에서 ${dist(st[1])}`);else if(c.station)meta.push(`${c.station} 근처`);
+  const planned=S.diary.find(e=>e.courseId===id&&e.status==='plan'&&e.date===S.cond.date);
+  return `<div class="dhero" style="background:${t.color}">${r.stops.slice(0,4).map(s=>`<span class="tile">${ic(picon(s.p),32)}</span>`).join('')}<a class="iconbtn back" href="#courses" aria-label="코스 목록으로">${ic('back',20)}</a></div>
+  <div class="pad">
+  <p style="margin-top:16px"><span class="tag" style="background:${t.color}">${t.long} · ${esc(c.zone)}</span></p>
+  <h1 class="display dtitle">${esc(c.title)}</h1>
+  <div class="meta">${meta.map(m=>`<span class="tag plain">${esc(m)}</span>`).join('')}</div>
+  ${r.out?`<div class="box warn"><b>지금 조건과는 안 맞는 코스예요.</b> ${esc(r.out)}</div>`:''}
+  ${r.near?`<div class="box warn">${esc(r.near)}</div>`:''}
+  ${c.note?`<div class="box info">${esc(MAP?c.note.replace(' 차량 이동 시간은 아직 재지 않았어요.',''):c.note)}</div>`:''}
+  ${r.warn.length?`<div class="box warn"><b>가기 전에 확인하세요</b><ul>${r.warn.map(w=>`<li>${esc(w)}</li>`).join('')}</ul>${r.better?`<button class="cta" style="min-height:46px;font-size:14px;margin-top:10px" data-act="set" data-k="time" data-v="${r.better}">${TIMES[r.better][0]}(${hm(TIMES[r.better][1])}~)로 바꾸면 시간이 맞아요</button>`:''}</div>`:''}
+  ${MAP?mapCard(id,r,car):''}
+  <ol class="tl">${r.stops.map((s,i)=>stopHTML(r,s,i,car)).join('')}</ol>
+  <p class="note" style="margin-top:8px">시간표는 어림값이에요. 머무는 시간은 식사 80분, 카페 60분, 영화 150분처럼 잡았어요.${r.stops.some(s=>s.leg&&s.leg.tmin)?' 카카오맵으로 재지 못한 구간은 TMAP 길찾기 시간을 썼어요.':''}${r.stops.some(s=>s.leg&&!s.leg.m&&!s.leg.tmin&&!s.leg.car)?' 아직 재지 못한 구간은 이동 10분으로 잡았어요.':''}${r.stops.some(s=>s.leg&&s.leg.car&&!s.leg.tmin)?' 차량 이동 시간을 모르는 구간은 15분으로 잡았어요.':''}</p>
+  </div>
+  <div class="dock"><button class="cta ghost" style="flex:0 0 96px" data-act="share" data-id="${id}">${ic('share',18)}공유</button>${planned?`<a class="cta soft" href="#diary">${ic('check',20)}담았어요 · 기록 보기</a>`:`<button class="cta" data-act="go" data-id="${id}" ${r.out?'disabled':''}>이 코스로 갈게요</button>`}</div>`;
+}
+function stopHTML(r,s,i,car){
+  const p=s.p,open=S.open===i,sec=SEC[p.sec];
+  const L=s.leg;
+  const leg=!L?'':L.car?(L.tmin?`<p class="leg">${ic('car',15)}차로 약 ${L.tmin}분 · ${dist(L.tm)} <span class="sub">(TMAP 경로)</span></p>`:`<p class="leg">${ic('car',15)}차로 이동 · 걸리는 시간은 아직 재지 않았어요</p>`):L.m?`<p class="leg">${ic('foot',15)}걸어서 ${L.min}분 · ${dist(L.m)}</p>`:L.tmin?`<p class="leg">${ic('foot',15)}걸어서 약 ${L.tmin}분 · ${dist(L.tm)} <span class="sub">(TMAP 경로)</span></p>`:`<p class="leg" style="color:var(--sub)">${ic('foot',15)}걷는 거리는 아직 재지 않았어요</p>`;
+  const badges=(p.visited?'<span class="tag ok">팀이 가봤어요</span>':'')+(s.opt?'<span class="tag plain">선택</span>':'')+(s.hc?`<span class="tag ${s.hc.lvl}">시간 확인</span>`:'');
+  const kv=[];
+  if(p.addr)kv.push(['주소',p.addr]);
+  if(p.hours)kv.push(['영업',p.hours]);
+  if(p.closed)kv.push(['휴무',p.closed]);
+  if(p.price)kv.push(['가격',p.price]);
+  else if(p.menu)kv.push(['메뉴',p.menu.join(', ')]);
+  if(p.parking)kv.push(['주차',p.parking]);
+  if(D.station[s.id])kv.push(['역',`${D.station[s.id][0]}에서 걸어서 ${D.station[s.id][2]}분 · ${dist(D.station[s.id][1])}`]);
+  const body=!open?'':`<div class="sbody">
+    <div class="photoph" aria-hidden="true"><div style="background:${sec[0]}">${ic(picon(p),26)}</div><div style="background:#F3ECE4;font-size:11.5px;color:#4A433E;text-align:center;line-height:1.4">사진은<br>준비 중이에요</div></div>
+    ${p.blurb?`<p>${esc(p.blurb)}</p>`:'<p class="sub">소개 글은 아직 준비 중이에요.</p>'}
+    ${p.team?`<p style="margin-top:8px"><span class="tag">팀 메모</span> ${esc(p.team)}</p>`:''}
+    ${s.hc?`<div class="box ${s.hc.lvl==='bad'?'warn':'warn'}" style="margin-top:10px">${esc(s.hc.msg)}</div>`:''}
+    ${p.wait?`<div class="box warn" style="margin-top:10px">웨이팅이 있을 수 있어요. 가기 전에 검색해 보세요.</div>`:''}
+    ${kv.length?`<dl class="kv">${kv.map(k=>`<dt>${k[0]}</dt><dd>${esc(k[1])}</dd>`).join('')}</dl>`:'<p class="sub" style="margin-top:8px">영업시간과 가격 정보는 아직 없어요.</p>'}
+    <div class="maplinks">${p.kakao?`<a class="maplink" href="${esc(p.kakao)}" target="_blank" rel="noopener">${ic('pin',18)}카카오맵에서 보기</a>`:''}${MAP?`<button class="maplink" data-act="nmap" data-i="${i}">${ic('route',18)}네이버지도 앱으로 길찾기</button>`:''}</div>
+    ${s.alts.length?`<div class="alts"><h4>다른 곳으로 바꾸기</h4><div class="chips">${s.alts.map(a=>`<button class="chip sm" data-act="swap" data-slot="${s.slot}" data-v="${a}">${esc(PL[a].name)}${PL[a].visited?' ·&nbsp;<span style="color:var(--ok)">가봤어요</span>':''}</button>`).join('')}</div></div>`:''}
+  </div>`;
+  return `<li class="stop">${leg}<span class="dotc" style="background:${sec[0]}">${ic(picon(p),18)}</span>
+  <button class="shead" data-act="open" data-i="${i}" aria-expanded="${open}"><span class="grow"><span class="t">${hm(s.t)} · ${esc(p.sub||p.sec)}</span><b>${esc(p.name)}</b><span class="row wrap" style="gap:5px;margin-top:3px">${badges}</span></span><span class="pm" aria-hidden="true">${open?'−':'+'}</span></button>${body}</li>`;
+}
+
+/* ---------- 지도 (TMAP) : 공개 사이트 빌드에서만 켜짐 ---------- */
+const MAP=typeof window.Tmapv2!=='undefined';
+const TK='6IrZ44VkAs1xBjnALhOu84RwcdxQQY5G2N1Ynlqw';
+const TAPI='https://apis.openapi.sk.com/tmap/';
+const GEOK='datefit-geo-v1',TTL=23*3600e3; // TMAP 약관: 받은 데이터는 24시간 넘게 쓰지 않음
+const RT={}; // 경로는 메모리에만
+const MV={el:null,map:null,key:null,ov:[],me:null,meMk:null,meLine:null,stat:'',info:'',busy:false,pts:{}};
+function geoAll(){let c={};try{c=JSON.parse(localStorage.getItem(GEOK))||{}}catch(e){}const n=Date.now();for(const k in c)if(!(n-c[k][2]<TTL))delete c[k];return c}
+function geoPut(id,v){const c=geoAll();c[id]=v;try{localStorage.setItem(GEOK,JSON.stringify(c))}catch(e){}}
+function rtOf(a,b,mode){return RT[a+'|'+b+'|'+mode]||null}
+async function tget(path,params){
+  const u=TAPI+path+(path.includes('?')?'&':'?')+new URLSearchParams(params);
+  const r=await fetch(u,{headers:{appKey:TK}});
+  if(r.status===204)return null;
+  if(!r.ok)throw new Error('TMAP '+r.status);
+  return r.json();
+}
+async function tpost(path,body){
+  const r=await fetch(TAPI+path,{method:'POST',headers:{appKey:TK,'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!r.ok)throw new Error('TMAP '+r.status);
+  return r.json();
+}
+function addrKey(a){const t=String(a||'').replace(/\(.*?\)/g,' ').trim().split(/\s+/);const i=t.findIndex((x,j)=>j>1&&/^\d+(-\d+)?$/.test(x));return i>0?{q:t.slice(0,i+1).join(' '),k:t[i-1]+' '+t[i]}:{q:t.join(' '),k:''}}
+async function locate(id){
+  const hit=geoAll()[id];if(hit)return hit;
+  const p=PL[id],city=/김해/.test(p.addr)?'김해':'진주',A=addrKey(p.addr);
+  let v=null;
+  try{
+    const j=await tget('pois',{version:1,format:'json',count:10,reqCoordType:'WGS84GEO',resCoordType:'WGS84GEO',searchKeyword:city+' '+p.name.replace(/[()]/g,' ').replace(/\s+/g,' ').trim()});
+    const L=(j&&j.searchPoiInfo&&j.searchPoiInfo.pois.poi)||[];
+    const m=L.find(x=>A.k&&`${x.roadName} ${x.firstBuildNo}${x.secondBuildNo&&x.secondBuildNo!=='0'?'-'+x.secondBuildNo:''}`===A.k);
+    if(m)v=[+(m.frontLat||m.noorLat),+(m.frontLon||m.noorLon),Date.now(),'poi'];
+  }catch(e){}
+  if(!v){
+    const j=await tget('geo/fullAddrGeo',{version:1,format:'json',coordType:'WGS84GEO',fullAddr:A.q});
+    const c=j&&j.coordinateInfo&&j.coordinateInfo.coordinate&&j.coordinateInfo.coordinate[0];
+    if(c){const la=c.newLatEntr||c.newLat||c.latEntr||c.lat,lo=c.newLonEntr||c.newLon||c.lonEntr||c.lon;if(la&&lo)v=[+la,+lo,Date.now(),'addr']}
+  }
+  if(v)geoPut(id,v);
+  return v;
+}
+async function routeOf(a,b,pa,pb,mode){
+  const k=a+'|'+b+'|'+mode;if(RT[k])return RT[k];
+  const body={startX:String(pa[1]),startY:String(pa[0]),endX:String(pb[1]),endY:String(pb[0]),reqCoordType:'WGS84GEO',resCoordType:'WGS84GEO',startName:'출발',endName:'도착'};
+  const j=await tpost(mode==='car'?'routes?version=1&format=json':'routes/pedestrian?version=1&format=json',mode==='car'?Object.assign(body,{searchOption:'0'}):body);
+  const F=j.features||[];const pr=(F[0]&&F[0].properties)||{};
+  const path=[];F.forEach(f=>{if(f.geometry.type==='LineString')f.geometry.coordinates.forEach(c=>path.push([c[1],c[0]]))});
+  const v={m:pr.totalDistance,min:Math.max(1,Math.round(pr.totalTime/60)),path};
+  if(a&&b)RT[k]=v;return v;
+}
+const LL=(p)=>new Tmapv2.LatLng(p[0],p[1]);
+function hav(a,b){const R=6371e3,r=x=>x*Math.PI/180,dl=r(b[0]-a[0]),dn=r(b[1]-a[1]);const h=Math.sin(dl/2)**2+Math.cos(r(a[0]))*Math.cos(r(b[0]))*Math.sin(dn/2)**2;return Math.round(2*R*Math.asin(Math.sqrt(h)))}
+function mapCard(id,r,car){
+  return `<section class="mapcard" aria-label="코스 지도"><div class="mapslot" id="mapslot">${MV.stat?`<div class="mapmsg" id="mapmsg">${esc(MV.stat)}</div>`:''}</div>
+  <div class="mapbar"><button class="chip sm" data-act="me">${ic('pin',16)}내 위치</button><button class="chip sm" data-act="fit">코스 전체 보기</button></div>
+  <p class="mapinfo" id="mapinfo">${MV.info||'번호는 들르는 순서예요. 선은 TMAP 길찾기 경로예요.'}</p></section>`;
+}
+function setStat(t){MV.stat=t;const s=document.getElementById('mapslot');if(!s)return;let m=document.getElementById('mapmsg');if(!t){m&&m.remove();return}if(!m){m=document.createElement('div');m.className='mapmsg';m.id='mapmsg';s.appendChild(m)}m.textContent=t}
+function setInfo(h){MV.info=h;const e=document.getElementById('mapinfo');if(e)e.innerHTML=h}
+function clearOv(){MV.ov.forEach(o=>{try{o.setMap(null)}catch(e){}});MV.ov=[]}
+function mapFit(){if(!MV.map)return;const B=new Tmapv2.LatLngBounds();let n=0;Object.values(MV.pts).forEach(p=>{if(p){B.extend(LL(p));n++}});if(MV.me){B.extend(LL(MV.me));n++}if(n===1){MV.map.setCenter(LL(Object.values(MV.pts).find(Boolean)||MV.me));MV.map.setZoom(16)}else if(n)MV.map.fitBounds(B)}
+function mapMount(h){
+  if(!h.startsWith('c-'))return;
+  const slot=document.getElementById('mapslot');if(!slot)return;
+  const id=h.slice(2),c=D.courses.find(x=>x.id===id);if(!c)return;
+  if(!MV.el){MV.el=document.createElement('div');MV.el.id='tmap';slot.appendChild(MV.el);
+    try{MV.map=new Tmapv2.Map('tmap',{center:new Tmapv2.LatLng(35.19,128.08),width:'100%',height:'250px',zoom:15,zoomControl:true,scrollwheel:false})}catch(e){setStat('지도를 불러오지 못했어요.');return}}
+  else slot.insertBefore(MV.el,slot.firstChild);
+  try{MV.map.resize(slot.clientWidth,250)}catch(e){}
+  const r=resolve(c,S.cond,S.picks[id]);
+  const key=id+':'+r.stops.map(s=>s.id).join(',');
+  if(key===MV.key)return;
+  MV.key=key;drawCourse(r,key);
+}
+async function drawCourse(r,key){
+  clearOv();MV.pts={};MV.me=null;if(MV.meMk){MV.meMk.setMap(null);MV.meMk=null}if(MV.meLine){MV.meLine.setMap(null);MV.meLine=null}
+  setInfo('번호는 들르는 순서예요. 선은 TMAP 길찾기 경로예요.');
+  setStat('지도에 코스를 그리는 중이에요…');
+  let pts;
+  try{pts=await Promise.all(r.stops.map(s=>locate(s.id).catch(()=>null)))}catch(e){pts=[]}
+  if(MV.key!==key)return;
+  r.stops.forEach((s,i)=>{MV.pts[s.id]=pts[i]&&[pts[i][0],pts[i][1]]});
+  const miss=r.stops.filter((s,i)=>!pts[i]).map(s=>s.p.name);
+  r.stops.forEach((s,i)=>{if(!pts[i])return;
+    MV.ov.push(new Tmapv2.Marker({position:LL(pts[i]),iconHTML:`<div class="mk" style="background:${SEC[s.p.sec][0]}">${i+1}</div>`,iconSize:new Tmapv2.Size(28,28),offset:new Tmapv2.Point(14,14),title:s.p.name,map:MV.map}))});
+  if(!pts.some(Boolean)){setStat('장소 위치를 불러오지 못했어요. 잠시 뒤 다시 열어 주세요.');return}
+  setStat('');mapFit();
+  let changed=false,fail=0;
+  await Promise.all(r.stops.slice(1).map(async(s,j)=>{
+    const a=r.stops[j],pa=pts[j],pb=pts[j+1];if(!pa||!pb)return;
+    const mode=s.leg&&s.leg.car?'car':'walk';
+    const had=!!rtOf(a.id,s.id,mode);
+    try{const v=await routeOf(a.id,s.id,pa,pb,mode);if(MV.key!==key)return;
+      if(v.path.length)MV.ov.push(new Tmapv2.Polyline({path:v.path.map(LL),strokeColor:mode==='car'?'#6B625C':'#221E1C',strokeWeight:5,strokeOpacity:.85,map:MV.map}));
+      if(!had)changed=true}catch(e){fail++}
+  }));
+  if(MV.key!==key)return;
+  const notes=[];if(miss.length)notes.push(`${miss.join(', ')} 위치는 아직 못 찾았어요.`);if(fail)notes.push('일부 구간 경로를 받아오지 못했어요.');
+  setInfo('번호는 들르는 순서예요. 선은 TMAP 길찾기 경로예요.'+(notes.length?' '+esc(notes.join(' ')):''));
+  if(changed)render(true);
+}
+function findMe(){
+  if(!MV.map)return;
+  if(!window.isSecureContext||!navigator.geolocation){toast('이 주소에서는 위치를 쓸 수 없어요');return}
+  setInfo('현재 위치를 찾는 중이에요…');
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    const me=[pos.coords.latitude,pos.coords.longitude];MV.me=me;
+    if(MV.meMk)MV.meMk.setMap(null);if(MV.meLine){MV.meLine.setMap(null);MV.meLine=null}
+    MV.meMk=new Tmapv2.Marker({position:LL(me),iconHTML:'<div class="mk me"></div>',iconSize:new Tmapv2.Size(22,22),offset:new Tmapv2.Point(11,11),title:'내 위치',map:MV.map});
+    const id=route().slice(2),c=D.courses.find(x=>x.id===id);const r=resolve(c,S.cond,S.picks[id]);
+    const f=r.stops[0],fp=MV.pts[f.id];
+    if(!fp){setInfo('내 위치를 표시했어요. 첫 장소 위치를 아직 못 찾아서 길은 그리지 않았어요.');mapFit();return}
+    const d=hav(me,fp);
+    if(d>3000){setInfo(`첫 장소 <b>${esc(f.p.name)}</b>까지 직선으로 ${dist(d)}예요. 걷기엔 멀어서 길은 그리지 않았어요. 네이버지도 앱으로 대중교통 길찾기를 열 수 있어요.`);mapFit();return}
+    try{const v=await routeOf(null,null,me,fp,'walk');
+      MV.meLine=new Tmapv2.Polyline({path:v.path.map(LL),strokeColor:'#2F6BFF',strokeWeight:5,strokeOpacity:.9,map:MV.map});
+      setInfo(`내 위치에서 첫 장소 <b>${esc(f.p.name)}</b>까지 걸어서 약 ${v.min}분 · ${dist(v.m)} (TMAP 경로)`);}
+    catch(e){setInfo('내 위치를 표시했어요. 길은 받아오지 못했어요.')}
+    mapFit();
+  },err=>{setInfo(err.code===1?'위치 권한이 꺼져 있어요. 브라우저 설정에서 위치를 허용해 주세요.':'현재 위치를 찾지 못했어요. 잠시 뒤 다시 해 보세요.')},{enableHighAccuracy:true,timeout:12000,maximumAge:60000});
+}
+function openNaver(i){
+  const id=route().slice(2),c=D.courses.find(x=>x.id===id);const r=resolve(c,S.cond,S.picks[id]);
+  const s=r.stops[i],to=MV.pts[s.id];
+  if(!to){toast('장소 위치를 불러오는 중이에요. 잠시 뒤 다시 눌러 주세요');return}
+  let from=null,fname='';
+  if(i>0){from=MV.pts[r.stops[i-1].id];fname=r.stops[i-1].p.name}else if(MV.me){from=MV.me;fname='내 위치'}
+  const mode=i===0?(MV.me&&hav(MV.me,to)<=3000?'walk':'public'):(s.leg&&s.leg.car?'car':'walk');
+  const q=new URLSearchParams();
+  if(from){q.set('slat',from[0]);q.set('slng',from[1]);q.set('sname',fname)}
+  q.set('dlat',to[0]);q.set('dlng',to[1]);q.set('dname',s.p.name);q.set('appname',location.origin+location.pathname);
+  const path='route/'+mode+'?'+q.toString();
+  if(/Android/i.test(navigator.userAgent))location.href='intent://'+path+'#Intent;scheme=nmap;action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;package=com.nhn.android.nmap;end';
+  else{location.href='nmap://'+path;if(!/iPhone|iPad|iPod/i.test(navigator.userAgent))setTimeout(()=>toast('네이버지도 앱이 있는 휴대폰에서 열려요'),400)}
+}
+
+/* ---------- 스티커 ---------- */
+function stickerList(city){
+  const cs=D.courses.filter(c=>c.city===city);
+  const done=S.diary.filter(e=>e.status==='done'&&e.city===city);
+  const types=Object.entries(TYPES).filter(([k])=>cs.some(c=>c.type===k)).map(([k,t])=>({key:'t-'+k,name:t.long,icon:t.icon,color:t.color,on:done.some(e=>e.type===k),how:`'${t.long}' 코스를 다녀오면 붙어요`}));
+  const lms=[...new Set(cs.flatMap(c=>c.stops.flatMap(s=>[s.id,...s.alts])).filter(id=>PL[id].lm))].map(id=>({key:'p-'+id,name:PL[id].name.replace(/ \(.*\)/,''),icon:picon(PL[id]),color:SEC[PL[id].sec][0],on:done.some(e=>e.stops.includes(id)),how:`${PL[id].name}이(가) 들어간 코스를 다녀오면 붙어요`}));
+  return [...types,...lms];
+}
+const stkHTML=(s,btn)=>`<${btn?'button data-act="stk" data-how="'+esc(s.on?'모은 스티커예요':s.how)+'"':'div'} class="stk ${s.on?'on':'off'}"><i style="background:${s.color}">${s.on?ic(s.icon,36):'<span style="font-size:24px;color:#8A7F76">?</span>'}</i>${esc(s.name)}</${btn?'button':'div'}>`;
+function vStickers(){
+  const L=stickerList(S.city),n=L.filter(s=>s.on).length;
+  return `<div class="pad"><header class="top">${citySeg()}<span class="display" style="font-size:26px">${n}<span style="font-size:17px;color:var(--sub)"> / ${L.length}</span></span></header>
+  <h1 class="display" style="font-size:28px;margin-top:16px">${S.city} 스티커북</h1>
+  <p class="sub" style="font-size:14px;margin-top:4px">코스를 다녀왔다고 기록하면 스티커가 붙어요</p>
+  <section class="board" aria-label="스티커 모음">${L.map(s=>stkHTML(s,true)).join('')}</section>
+  <section class="reward"><div class="grow"><small>${L.length}개를 다 모으면</small><br><b style="font-size:16px">지역 제휴 혜택</b><p>아직 계획 단계예요. 지자체·지역 상권과 협의해 정할 예정이에요.</p></div><span class="n">${n}/${L.length}</span></section>
+  ${n?'':`<div style="margin-top:16px"><a class="cta ghost" href="#courses">첫 스티커 받으러 가기</a></div>`}
+  </div>${nav('stickers')}`;
+}
+
+/* ---------- 기록 ---------- */
+function vDiary(){
+  const plans=S.diary.filter(e=>e.status==='plan').sort((a,b)=>a.date.localeCompare(b.date));
+  const done=S.diary.filter(e=>e.status==='done').sort((a,b)=>b.date.localeCompare(a.date));
+  return `<div class="pad"><header class="top"><h1 class="display" style="font-size:28px">우리의 기록</h1><span class="sub" style="font-size:13px">다녀온 코스 ${done.length}개</span></header>
+  ${!S.diary.length?`<div class="empty" style="margin-top:22px;padding:34px 18px"><div style="display:flex;justify-content:center;gap:8px;margin-bottom:14px"><span class="tile" style="background:var(--peach)">${ic('route',26)}</span><span class="tile" style="background:var(--mint)">${ic('camera',26)}</span><span class="tile" style="background:var(--butter)">${ic('star',26)}</span></div><b style="color:var(--ink);font-size:16px">아직 기록이 없어요</b><br>코스를 고르고 "이 코스로 갈게요"를 누르면<br>여기에 담겨요. 다녀온 뒤엔 사진과 메모를 남길 수 있어요.<div style="margin-top:16px"><a class="cta" href="#courses">코스 보러 가기</a></div></div>`:''}
+  ${plans.length?`<section class="sect"><h2>다가오는 데이트</h2><div class="list">${plans.map(e=>`<div class="plan"><span class="tag" style="background:${TYPES[e.type].color}">${dlabel(e.date)} · ${e.city}</span><p class="ctitle">${esc(e.title)}</p><p class="cstops">${e.stops.map(id=>esc(PL[id].name)).join(' → ')}</p><div class="row" style="margin-top:12px"><button class="cta" style="min-height:48px;font-size:14px" data-act="done" data-id="${e.id}">${ic('check',18)}다녀왔어요</button><button class="textbtn" data-go="c-${e.courseId}">코스 보기</button><button class="textbtn" data-act="del" data-id="${e.id}">${S.confirm===e.id?'정말 지울까요?':'취소'}</button></div></div>`).join('')}</div></section>`:''}
+  ${done.length?`<section class="sect"><h2>다녀온 날들</h2><div class="diary">${done.map(e=>`<article class="polaroid"><label class="pphoto" style="background:${TYPES[e.type].color};cursor:pointer">${e.photo?`<img src="${e.photo}" alt="${esc(e.title)} 사진">`:`${ic('camera',28)}<span>우리가 찍은 사진 넣기</span>`}<input type="file" accept="image/*" data-photo="${e.id}" style="position:absolute;inset:0;opacity:0;cursor:pointer" aria-label="사진 넣기"></label><h3>${esc(e.title)}</h3><p class="d">${dlabel(e.date)} · ${e.stops.map(id=>esc(PL[id].name)).join(' → ')}</p><textarea class="memo" id="memo-${e.id}" data-memo="${e.id}" placeholder="오늘 어땠는지 한 줄 남겨요" aria-label="메모">${esc(e.memo||'')}</textarea><div class="row between"><span class="sub" style="font-size:11.5px;margin-left:4px">이 기기에만 저장돼요</span><button class="textbtn" data-act="del" data-id="${e.id}">${S.confirm===e.id?'정말 지울까요?':'지우기'}</button></div></article>`).join('')}</div></section>`:''}
+  ${S.diary.length?`<div style="margin-top:24px"><a class="cta ghost" href="#plan">${ic('plus',18)}다음 데이트 코스 짜기</a></div>`:''}
+  </div>${nav('diary')}`;
+}
+
+/* ---------- 시트 ---------- */
+function sheetHTML(){
+  const s=S.sheet;if(!s)return '';
+  let inner='';
+  if(s.kind==='info')inner=`<h2>데이터 안내</h2><ul>
+   <li>장소 이름, 주소, 영업시간, 가격, 주차는 2026년 11월 8일 카카오맵에 나온 내용을 옮긴 거예요. 그 뒤로 바뀌었을 수 있어요.</li>
+   <li>걷는 거리와 시간은 카카오맵 도보 길찾기(큰길 우선)로 잰 값이에요. 재지 못한 구간은 "아직 재지 않았어요"라고 적었어요.</li>
+   ${MAP?`<li>지도, 장소 위치, 지도 위 경로는 TMAP에서 그때그때 받아와요. 카카오맵으로 재지 못한 구간은 TMAP 길찾기 시간을 "(TMAP 경로)"라고 표시해 보여줘요.</li>
+   <li>"내 위치"를 누르면 길을 찾으려고 현재 위치를 TMAP에 보내요. 이 앱은 위치를 저장하지 않아요.</li>`:''}
+   <li>"팀이 가봤어요"는 팀원이 직접 다녀온 곳에만 붙어요.</li>
+   <li>평점과 태그는 카카오맵에 표시된 그대로예요.</li>
+   <li>술집의 "가볍게/제대로" 구분은 업종 이름을 보고 나눈 거예요.</li>
+   <li>사진은 아직 없어요. 직접 찍었거나 사용 허락을 받은 사진만 넣을 예정이에요.</li>
+   <li>스티커와 기록은 이 기기의 브라우저에만 저장돼요. 로그인이나 서버는 없는 데모예요.</li></ul>
+   <div style="margin-top:18px"><button class="cta" data-act="close">알겠어요</button></div>`;
+  if(s.kind==='share')inner=`<h2>코스 공유</h2><p style="margin-top:6px">${s.copied?'복사했어요. 메신저에 붙여 넣으면 돼요.':'아래 내용을 길게 눌러 복사해 주세요.'}</p><textarea id="share-text" readonly>${esc(s.text)}</textarea><div style="margin-top:12px"><button class="cta" data-act="close">닫기</button></div>`;
+  if(s.kind==='party')inner=`<h2>${s.list.length?'스티커가 붙었어요!':'기록에 담았어요'}</h2><p style="margin-top:6px">${esc(s.title)}</p>${s.list.length?`<div class="party">${s.list.map(x=>stkHTML(x)).join('')}</div>`:'<p style="margin-top:8px">이 코스로 받을 스티커는 이미 다 모았어요.</p>'}<div class="row" style="margin-top:14px"><button class="cta ghost" data-act="close" data-then="stickers">스티커북 보기</button><button class="cta" data-act="close">사진·메모 남기기</button></div>`;
+  return `<div class="scrim" data-act="close-scrim"><div class="sheet" role="dialog" aria-modal="true">${inner}</div></div>`;
+}
+let toastT;
+function toast(m){clearTimeout(toastT);S.toast=m;paintLayer();toastT=setTimeout(()=>{S.toast=null;paintLayer()},2400)}
+function paintLayer(){document.getElementById('layer').innerHTML=sheetHTML()+(S.toast?`<div class="toast" role="status">${esc(S.toast)}</div>`:'')}
+
+/* ---------- 라우팅 ---------- */
+function route(){const h=(location.hash||'#home').slice(1);return h||'home'}
+let lastRoute='';
+function render(keep){
+  const h=route(),app=document.getElementById('app');
+  const y=window.scrollY;
+  let html;
+  if(h.startsWith('c-'))html=vDetail(h.slice(2));
+  else html=({home:vHome,plan:vPlan,courses:vCourses,stickers:vStickers,diary:vDiary}[h]||vHome)();
+  app.className='app'+((h==='plan'||h.startsWith('c-'))?' nonav':'');
+  app.innerHTML=html;
+  if(keep&&h===lastRoute)window.scrollTo(0,y);else window.scrollTo(0,0);
+  lastRoute=h;paintLayer();
+  if(MAP)mapMount(h);
+}
+window.addEventListener('hashchange',()=>{S.open=0;S.confirm=null;render()});
+
+document.addEventListener('click',e=>{
+  const go=e.target.closest('[data-go]');if(go){location.hash=go.dataset.go;return}
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const a=b.dataset.act,v=b.dataset.v,c=S.cond;
+  if(a==='close-scrim'){if(e.target!==b)return;S.sheet=null;paintLayer();return}
+  if(a==='close'){S.sheet=null;paintLayer();if(b.dataset.then)location.hash=b.dataset.then;return}
+  if(a==='city'){S.city=v;save();render(true);return}
+  if(a==='info'){S.sheet={kind:'info'};paintLayer();return}
+  if(a==='type'){S.type=v;if(route()!=='courses')location.hash='courses';else render(true);return}
+  if(a==='set'){const k=b.dataset.k;c[k]=(k==='limit')?+v:v;save();render(true);return}
+  if(a==='play'){c.play=c.play.includes(v)?c.play.filter(x=>x!==v):[...c.play,v];save();render(true);return}
+  if(a==='toggle'){c[b.dataset.k]=!c[b.dataset.k];save();render(true);return}
+  if(a==='open'){const i=+b.dataset.i;S.open=S.open===i?-1:i;render(true);return}
+  if(a==='swap'){const id=route().slice(2);(S.picks[id]=S.picks[id]||{})[b.dataset.slot]=v;render(true);toast(`${PL[v].name}(으)로 바꿨어요`);return}
+  if(a==='stk'){toast(b.dataset.how);return}
+  if(a==='me'){findMe();return}
+  if(a==='fit'){mapFit();return}
+  if(a==='nmap'){openNaver(+b.dataset.i);return}
+  if(a==='go'){
+    const id=b.dataset.id,cs=D.courses.find(x=>x.id===id),r=resolve(cs,c,S.picks[id]);
+    S.diary.push({id:'e'+Date.now(),courseId:id,city:cs.city,type:cs.type,title:cs.title,stops:r.stops.map(s=>s.id),date:c.date,status:'plan',memo:'',photo:null});
+    save();render(true);toast(`${dlabel(c.date)} 데이트로 담았어요`);return}
+  if(a==='done'){
+    const en=S.diary.find(x=>x.id===b.dataset.id);const before=stickerList(en.city).filter(s=>s.on).map(s=>s.key);
+    en.status='done';save();
+    const got=stickerList(en.city).filter(s=>s.on&&!before.includes(s.key));
+    clearTimeout(toastT);S.toast=null;S.sheet={kind:'party',list:got,title:`${dlabel(en.date)} · ${en.title}`};render(true);return}
+  if(a==='del'){const id=b.dataset.id;if(S.confirm!==id){S.confirm=id;render(true);return}S.diary=S.diary.filter(x=>x.id!==id);S.confirm=null;save();render(true);toast('지웠어요');return}
+  if(a==='share'){
+    const id=b.dataset.id,cs=D.courses.find(x=>x.id===id),r=resolve(cs,c,S.picks[id]);
+    const text=`${cs.title}\n${dlabel(c.date)} · ${cs.city} ${cs.zone}\n\n`+r.stops.map(s=>`${hm(s.t)} ${s.p.name}${s.p.kakao?'\n'+s.p.kakao:''}`).join('\n')+`\n\n시간은 어림값이에요. 영업시간은 가기 전에 확인해 주세요.`;
+    const show=copied=>{S.sheet={kind:'share',text,copied};paintLayer();if(!copied){const t=document.getElementById('share-text');t&&t.select()}};
+    try{navigator.clipboard.writeText(text).then(()=>show(true),()=>show(false))}catch(err){show(false)}
+    return}
+});
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.id==='date-input'&&t.value){S.cond.date=t.value<today()?today():t.value;save();render(true);return}
+  if(t.dataset.photo&&t.files&&t.files[0]){
+    const en=S.diary.find(x=>x.id===t.dataset.photo),fr=new FileReader();
+    fr.onload=()=>{const img=new Image();img.onload=()=>{
+      const k=Math.min(1,720/Math.max(img.width,img.height)),cv=document.createElement('canvas');cv.width=Math.round(img.width*k);cv.height=Math.round(img.height*k);
+      cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);en.photo=cv.toDataURL('image/jpeg',.72);
+      const ok=save();render(true);toast(ok?'사진을 넣었어요':'사진은 보이지만, 브라우저 저장 공간이 부족해 다음에 열면 사라질 수 있어요');
+    };img.onerror=()=>toast('이 사진은 열 수 없어요. 다른 사진으로 해 보세요');img.src=fr.result};
+    fr.readAsDataURL(t.files[0]);
+  }
+});
+document.addEventListener('input',e=>{const t=e.target;if(t.dataset.memo){const en=S.diary.find(x=>x.id===t.dataset.memo);if(en){en.memo=t.value;save()}}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.sheet){S.sheet=null;paintLayer()}});
+render();
+</script>
+
+</body></html>
