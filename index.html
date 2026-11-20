@@ -167,6 +167,27 @@ button.maplink{color:var(--link)}
 .mapslot{position:relative;height:250px;background:#EEE7DE}
 .mapslot>#tmap{position:absolute;inset:0}
 .mapmsg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;text-align:center;font-size:13px;color:var(--sub);z-index:2;pointer-events:none}
+.stopnums{display:flex;gap:6px;overflow-x:auto;padding:12px 14px 0;scrollbar-width:none}
+.stopnums::-webkit-scrollbar{display:none}
+.stopnum{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;min-height:36px;padding:0 12px 0 4px;border-radius:18px;background:var(--bg);box-shadow:inset 0 0 0 1.5px var(--line);font-size:13px;white-space:nowrap}
+.stopnum .n{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:13px;border:2px solid var(--ink);font-weight:700;font-size:12px}
+.dnum{position:absolute;top:-6px;left:-6px;min-width:19px;height:19px;padding:0 4px;border-radius:10px;background:var(--ink);color:var(--bg);font:700 11px/19px var(--body);text-align:center}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.stop.flash>.shead{animation:flash 1.4s ease-out}
+@keyframes flash{0%,30%{background:var(--butter);box-shadow:0 0 0 6px var(--butter);border-radius:14px}100%{background:transparent;box-shadow:0 0 0 6px transparent}}
+.wheelbtn{display:flex;align-items:center;gap:12px;width:100%;margin-top:10px;padding:12px 14px;border-radius:20px;background:var(--butter);text-align:left;min-height:60px}
+.wheelbtn b{display:block;font-size:15px}.wheelbtn small{display:block;font-size:12px;color:#4A433E}
+.wheelico{flex:0 0 34px;height:34px;border-radius:17px;border:2px solid var(--ink);background:conic-gradient(var(--peach) 0 25%,var(--lilac) 0 50%,var(--mint) 0 75%,var(--pink) 0)}
+.wheelbox{position:relative;display:flex;justify-content:center;margin:16px 0 6px}
+.wheel{width:240px;height:240px;will-change:transform}
+.wheel svg{display:block}
+.wptr{position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:13px solid transparent;border-right:13px solid transparent;border-top:24px solid var(--ink);z-index:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.2))}
+.wres{margin-top:10px;padding:12px 14px;border-radius:18px;background:var(--card);box-shadow:inset 0 0 0 2px var(--ink);text-align:center}
+.wres small{display:block;font-size:12px;color:var(--sub)}.wres b{display:block;font-size:16px;margin-top:2px}.wres span{display:block;font-size:12px;color:var(--sub)}
+.wlist{list-style:none;padding:0!important;margin:12px 0 0!important;display:flex;flex-direction:column;gap:6px}
+.wlist .optrow{min-height:52px}
+.wlist .optrow small{display:block;margin:2px 0 0}
+.wno{display:inline-flex;align-items:center;justify-content:center;flex:0 0 26px;height:26px;border-radius:13px;border:2px solid var(--ink);font-weight:700;font-size:12px}
 .mapbar{display:flex;flex-wrap:wrap;gap:8px;padding:12px 14px 4px}
 .mapinfo{padding:4px 14px 12px;font-size:12px;color:var(--sub);line-height:1.55}
 .mapinfo b{color:var(--ink)}
@@ -464,6 +485,7 @@ function vCourses(){
   return `<div class="pad">
   <header class="top"><h1 class="display" style="font-size:28px">${S.city} 코스</h1>${citySeg()}</header>
   <button class="row" data-go="plan" style="margin-top:12px;width:100%;padding:10px 14px;border-radius:20px;background:var(--card);box-shadow:var(--shadow);text-align:left;min-height:52px">${ic('tune',20)}<span class="grow" style="font-size:13px;line-height:1.5">${condChips().map(esc).join(' · ')}</span><b style="font-size:13px;color:var(--link);white-space:nowrap">바꾸기</b></button>
+  ${R.fit.length+R.near.length>=2?`<button class="wheelbtn" data-act="wheel"><span class="wheelico" aria-hidden="true"></span><span class="grow"><b>고르기 어렵다면 돌림판</b><small>추천 코스 ${Math.min(8,R.fit.length+R.near.length)}개 중에서 하나를 뽑아 드려요</small></span>${ic('arrow',18)}</button>`:''}
   <div class="scrollx" style="margin-top:12px">${tf.map(x=>`<button class="chip sm" data-act="type" data-v="${x[0]}" aria-pressed="${S.type===x[0]}">${x[1]}</button>`).join('')}</div>
   ${R.fit.length?`<div class="list">${R.fit.map((r,i)=>courseCard(r,i,i===0)).join('')}</div>`:`<div class="empty"><b style="color:var(--ink)">지금 조건에 딱 맞는 코스가 없어요</b><br>걷는 거리나 놀거리 조건을 조금 풀어 보세요.<div style="margin-top:12px"><a class="cta ghost" href="#plan">조건 바꾸기</a></div></div>`}
   ${R.near.length?`<section class="sect"><h2>조금만 더 걸으면</h2><div class="list">${R.near.map(r=>courseCard(r).replace('<div class="reasons">',`<div class="reasons"><span class="tag warn">${esc(r.near)}</span>`)).join('')}</div></section>`:''}
@@ -521,12 +543,13 @@ function stopHTML(r,s,i,car){
     <div style="margin-top:6px">${S.visits[s.id]?`<span class="tag ok">방문 인증됨 · ${dlabel(S.visits[s.id])}</span>`:`<button class="chip sm" data-act="qr" data-id="${s.id}">${ic('camera',15)}방문 인증하기</button>`}</div>
     ${s.alts.length?`<div class="alts"><h4>다른 곳으로 바꾸기</h4><div class="chips">${s.alts.map(a=>`<button class="chip sm" data-act="swap" data-slot="${s.slot}" data-v="${a}">${esc(PL[a].name)}${PL[a].visited?' ·&nbsp;<span style="color:var(--ok)">가봤어요</span>':''}</button>`).join('')}</div></div>`:''}
   </div>`;
-  return `<li class="stop">${leg}<span class="dotc" style="background:${sec[0]}">${ic(picon(p),18)}</span>
-  <button class="shead" data-act="open" data-i="${i}" aria-expanded="${open}"><span class="grow"><span class="t">${hm(s.t)} · ${esc(p.sub||p.sec)}</span><b>${esc(p.name)}</b><span class="row wrap" style="gap:5px;margin-top:3px">${badges}</span></span><span class="pm" aria-hidden="true">${open?'−':'+'}</span></button>${body}</li>`;
+  return `<li class="stop" id="stop-${i}">${leg}<span class="dotc" style="background:${sec[0]}">${ic(picon(p),18)}<span class="dnum" aria-hidden="true">${i+1}</span></span>
+  <button class="shead" data-act="open" data-i="${i}" aria-expanded="${open}"><span class="grow"><span class="t"><span class="sr">${i+1}번 · </span>${hm(s.t)} · ${esc(p.sub||p.sec)}</span><b>${esc(p.name)}</b><span class="row wrap" style="gap:5px;margin-top:3px">${badges}</span></span><span class="pm" aria-hidden="true">${open?'−':'+'}</span></button>${body}</li>`;
 }
 
 /* ---------- 지도 (TMAP) : 공개 사이트 빌드에서만 켜짐 ---------- */
 const MAP=typeof window.Tmapv2!=='undefined';
+const MAPTIP='번호는 추천 순서예요. 순서는 바꿔서 가도 돼요. 번호를 누르면 그 장소 설명으로 이동해요. 선은 TMAP 길찾기 경로예요.';
 const TK='6IrZ44VkAs1xBjnALhOu84RwcdxQQY5G2N1Ynlqw';
 const TAPI='https://apis.openapi.sk.com/tmap/';
 const GEOK='datefit-geo-v1',TTL=23*3600e3; // TMAP 약관: 받은 데이터는 24시간 넘게 쓰지 않음
@@ -579,8 +602,9 @@ const LL=(p)=>new Tmapv2.LatLng(p[0],p[1]);
 function hav(a,b){const R=6371e3,r=x=>x*Math.PI/180,dl=r(b[0]-a[0]),dn=r(b[1]-a[1]);const h=Math.sin(dl/2)**2+Math.cos(r(a[0]))*Math.cos(r(b[0]))*Math.sin(dn/2)**2;return Math.round(2*R*Math.asin(Math.sqrt(h)))}
 function mapCard(id,r,car){
   return `<section class="mapcard" aria-label="코스 지도"><div class="mapslot" id="mapslot">${MV.stat?`<div class="mapmsg" id="mapmsg">${esc(MV.stat)}</div>`:''}</div>
+  <div class="stopnums" role="group" aria-label="장소로 이동">${r.stops.map((s,i)=>`<button class="stopnum" data-act="stop" data-i="${i}"><span class="n" style="background:${SEC[s.p.sec][0]}">${i+1}</span>${esc(s.p.name)}</button>`).join('')}</div>
   <div class="mapbar"><button class="chip sm" data-act="me">${ic('pin',16)}내 위치</button><button class="chip sm" data-act="fit">코스 전체 보기</button></div>
-  <p class="mapinfo" id="mapinfo">${MV.info||'번호는 들르는 순서예요. 선은 TMAP 길찾기 경로예요.'}</p></section>`;
+  <p class="mapinfo" id="mapinfo">${MV.info||MAPTIP}</p></section>`;
 }
 function setStat(t){MV.stat=t;const s=document.getElementById('mapslot');if(!s)return;let m=document.getElementById('mapmsg');if(!t){m&&m.remove();return}if(!m){m=document.createElement('div');m.className='mapmsg';m.id='mapmsg';s.appendChild(m)}m.textContent=t}
 function setInfo(h){MV.info=h;const e=document.getElementById('mapinfo');if(e)e.innerHTML=h}
@@ -601,7 +625,7 @@ function mapMount(h){
 }
 async function drawCourse(r,key){
   clearOv();MV.pts={};MV.me=null;if(MV.meMk){MV.meMk.setMap(null);MV.meMk=null}if(MV.meLine){MV.meLine.setMap(null);MV.meLine=null}
-  setInfo('번호는 들르는 순서예요. 선은 TMAP 길찾기 경로예요.');
+  setInfo(MAPTIP);
   setStat('지도에 코스를 그리는 중이에요…');
   let pts;
   try{pts=await Promise.all(r.stops.map(s=>locate(s.id).catch(()=>null)))}catch(e){pts=[]}
@@ -609,7 +633,9 @@ async function drawCourse(r,key){
   r.stops.forEach((s,i)=>{MV.pts[s.id]=pts[i]&&[pts[i][0],pts[i][1]]});
   const miss=r.stops.filter((s,i)=>!pts[i]).map(s=>s.p.name);
   r.stops.forEach((s,i)=>{if(!pts[i])return;
-    MV.ov.push(new Tmapv2.Marker({position:LL(pts[i]),iconHTML:`<div class="mk" style="background:${SEC[s.p.sec][0]}">${i+1}</div>`,iconSize:new Tmapv2.Size(28,28),offset:new Tmapv2.Point(14,14),title:s.p.name,map:MV.map}))});
+    const mk=new Tmapv2.Marker({position:LL(pts[i]),iconHTML:`<div class="mk" style="background:${SEC[s.p.sec][0]}">${i+1}</div>`,iconSize:new Tmapv2.Size(28,28),offset:new Tmapv2.Point(14,14),title:s.p.name,map:MV.map});
+    ['click','touchend'].forEach(ev=>{try{mk.addListener(ev,()=>goStop(i))}catch(e){}});
+    MV.ov.push(mk)});
   if(!pts.some(Boolean)){setStat('장소 위치를 불러오지 못했어요. 잠시 뒤 다시 열어 주세요.');return}
   setStat('');mapFit();
   let changed=false,fail=0;
@@ -623,8 +649,20 @@ async function drawCourse(r,key){
   }));
   if(MV.key!==key)return;
   const notes=[];if(miss.length)notes.push(`${miss.join(', ')} 위치는 아직 못 찾았어요.`);if(fail)notes.push('일부 구간 경로를 받아오지 못했어요.');
-  setInfo('번호는 들르는 순서예요. 선은 TMAP 길찾기 경로예요.'+(notes.length?' '+esc(notes.join(' ')):''));
+  setInfo(MAPTIP+(notes.length?' '+esc(notes.join(' ')):''));
   if(changed)render(true);
+}
+let goT=0;
+function goStop(i){
+  const now=Date.now();if(now-goT<500)return;goT=now;
+  S.open=i;render(true);
+  const id=route().slice(2),c=D.courses.find(x=>x.id===id);
+  if(MV.map&&c){const r=resolve(c,S.cond,S.picks[id]),pt=r.stops[i]&&MV.pts[r.stops[i].id];if(pt){try{MV.map.setCenter(LL(pt))}catch(e){}}}
+  requestAnimationFrame(()=>{const el=document.getElementById('stop-'+i);if(!el)return;
+    const smooth=!matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({top:el.getBoundingClientRect().top+window.scrollY-12,behavior:smooth?'smooth':'auto'});
+    el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');
+    const h=el.querySelector('.shead');h&&h.focus({preventScroll:true});});
 }
 function findMe(){
   if(!MV.map)return;
@@ -743,7 +781,38 @@ function sheetHTML(){
   if(s.kind==='qr')inner=`<h2>방문 인증</h2><p style="margin-top:6px"><b>${esc(PL[s.id].name)}</b></p><ul><li>실제 서비스에서는 가게에 놓인 QR을 카메라로 찍어서 인증해요.</li><li>이 데모에는 QR이 없어서 아래 버튼으로 대신해요.</li><li>인증 기록은 가게에 보내는 리포트의 "방문 커플 수"로 집계할 계획이에요. 누가 왔는지는 가게에 알려주지 않아요.</li></ul><div class="row" style="margin-top:14px"><button class="cta ghost" data-act="close">닫기</button><button class="cta" data-act="qr-ok" data-id="${s.id}">인증한 걸로 하기</button></div>`;
   if(s.kind==='share')inner=`<h2>코스 공유</h2><p style="margin-top:6px">${s.copied?'복사했어요. 메신저에 붙여 넣으면 돼요.':'아래 내용을 길게 눌러 복사해 주세요.'}</p><textarea id="share-text" readonly>${esc(s.text)}</textarea><div style="margin-top:12px"><button class="cta" data-act="close">닫기</button></div>`;
   if(s.kind==='party')inner=`<h2>${s.list.length?'스티커가 붙었어요!':'기록에 담았어요'}</h2><p style="margin-top:6px">${esc(s.title)}</p>${s.list.length?`<div class="party">${s.list.map(x=>stkHTML(x)).join('')}</div>`:'<p style="margin-top:8px">이 코스로 받을 스티커는 이미 다 모았어요.</p>'}<div class="row" style="margin-top:14px"><button class="cta ghost" data-act="close" data-then="stickers">스티커북 보기</button><button class="cta" data-act="close">사진·메모 남기기</button></div>`;
+  if(s.kind==='wheel')inner=wheelHTML(s);
   return `<div class="scrim" data-act="close-scrim"><div class="sheet" role="dialog" aria-modal="true">${inner}</div></div>`;
+}
+const WCOL=['#FFC9B5','#E7DEFF','#D9F0E3','#FFE9A8','#FAD4DF','#CDE7F7','#F7D9B8','#E2EFC5'];
+function wheelHTML(w){
+  const on=w.on,n=on.length,seg=360/Math.max(n,1),R=120,C=130;
+  const pt=a=>{const t=(a-90)*Math.PI/180;return [(C+R*Math.cos(t)).toFixed(2),(C+R*Math.sin(t)).toFixed(2)]};
+  const slices=n<2?`<circle cx="${C}" cy="${C}" r="${R}" style="fill:#F3ECE4"/>`:on.map((id,k)=>{
+    const a0=k*seg,a1=(k+1)*seg,[x0,y0]=pt(a0),[x1,y1]=pt(a1),mid=(a0+a1)/2,t=(mid-90)*Math.PI/180;
+    const lx=(C+R*.66*Math.cos(t)).toFixed(1),ly=(C+R*.66*Math.sin(t)).toFixed(1);
+    const no=w.ids.indexOf(id)+1;
+    return `<path d="M${C} ${C}L${x0} ${y0}A${R} ${R} 0 0 1 ${x1} ${y1}Z" style="fill:${WCOL[(no-1)%WCOL.length]}" stroke="#221E1C" stroke-width="2"/><text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="central" style="font:700 22px var(--body);fill:#221E1C">${no}</text>`}).join('');
+  const res=w.res&&D.courses.find(c=>c.id===w.res);
+  return `<h2>돌림판으로 정하기</h2>
+  <p style="margin-top:6px">${w.spin?'돌아가는 중이에요…':'돌림판에 넣을 코스를 골라 주세요. 두 개 이상이면 돌릴 수 있어요.'}</p>
+  <div class="wheelbox"><div class="wptr" aria-hidden="true"></div><div id="wheel" class="wheel" style="transform:rotate(${w.rot}deg)"><svg viewBox="0 0 260 260" width="240" height="240" role="img" aria-label="돌림판, 코스 ${n}개">${slices}<circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="#221E1C" stroke-width="3"/><circle cx="${C}" cy="${C}" r="14" style="fill:#221E1C"/></svg></div></div>
+  <div role="status" aria-live="polite">${res?`<div class="wres"><small>오늘은 이 코스예요</small><b>${w.ids.indexOf(res.id)+1}. ${esc(res.title)}</b><span>${esc(res.zone)}</span></div>`:''}</div>
+  <ul class="wlist">${w.ids.map((id,k)=>{const c=D.courses.find(x=>x.id===id);const sel=on.includes(id);return `<li><button class="optrow" data-act="wtog" data-v="${id}" aria-pressed="${sel}" ${w.spin?'disabled':''}><span class="wno" style="background:${WCOL[k%WCOL.length]}">${k+1}</span><span class="grow">${esc(c.title)}<small>${esc(TYPES[c.type].label)} · ${esc(c.zone)}</small></span><span class="dot"></span></button></li>`}).join('')}</ul>
+  <div class="row" style="margin-top:14px;position:sticky;bottom:calc(-22px - env(safe-area-inset-bottom,0px));padding:10px 0 calc(12px + env(safe-area-inset-bottom,0px));background:var(--bg)">${res?`<button class="cta ghost" data-act="wspin" ${n<2?'disabled':''}>다시 돌리기</button><button class="cta" data-act="wgo" data-v="${res.id}">이 코스 보기</button>`:`<button class="cta ghost" style="flex:0 0 96px" data-act="close" ${w.spin?'disabled':''}>닫기</button><button class="cta" data-act="wspin" ${n<2||w.spin?'disabled':''}>${n<2?'두 개 이상 골라 주세요':'돌리기'}</button>`}</div>`;
+}
+function spinWheel(){
+  const w=S.sheet;if(!w||w.kind!=='wheel'||w.spin||w.on.length<2)return;
+  const rnd=()=>{try{return crypto.getRandomValues(new Uint32Array(1))[0]/4294967296}catch(e){return Math.random()}};
+  const n=w.on.length,seg=360/n,k=Math.floor(rnd()*n),a=k*seg+seg*(0.15+0.7*rnd());
+  const cur=((w.rot%360)+360)%360,target=((360-a)%360+360)%360;
+  const rot=w.rot+360*5+((target-cur)+360)%360;
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  w.spin=true;w.res=null;paintLayer();
+  const el=document.getElementById('wheel');
+  if(el&&!reduce){void el.offsetWidth;el.style.transition='transform 4.2s cubic-bezier(.12,.7,.1,1)';el.style.transform=`rotate(${rot}deg)`}
+  w.rot=rot;
+  setTimeout(()=>{if(S.sheet!==w)return;w.spin=false;w.res=w.on[k];paintLayer()},reduce?300:4300);
 }
 let toastT;
 function toast(m){clearTimeout(toastT);S.toast=m;paintLayer();toastT=setTimeout(()=>{S.toast=null;paintLayer()},2400)}
@@ -770,7 +839,7 @@ document.addEventListener('click',e=>{
   const go=e.target.closest('[data-go]');if(go){location.hash=go.dataset.go;return}
   const b=e.target.closest('[data-act]');if(!b)return;
   const a=b.dataset.act,v=b.dataset.v,c=S.cond;
-  if(a==='close-scrim'){if(e.target!==b)return;S.sheet=null;paintLayer();return}
+  if(a==='close-scrim'){if(e.target!==b||(S.sheet&&S.sheet.spin))return;S.sheet=null;paintLayer();return}
   if(a==='close'){S.sheet=null;paintLayer();if(b.dataset.then)location.hash=b.dataset.then;return}
   if(a==='city'){S.city=v;save();render(true);return}
   if(a==='info'){S.sheet={kind:'info'};paintLayer();return}
@@ -784,6 +853,11 @@ document.addEventListener('click',e=>{
   if(a==='qr'){S.sheet={kind:'qr',id:b.dataset.id};paintLayer();return}
   if(a==='qr-ok'){S.visits[b.dataset.id]=today();save();S.sheet=null;render(true);toast('방문을 인증했어요');return}
   if(a==='oslot'){S.oslots=S.oslots.includes(v)?S.oslots.filter(x=>x!==v):[...S.oslots,v];render(true);return}
+  if(a==='stop'){goStop(+b.dataset.i);return}
+  if(a==='wheel'){const R=ranked(),ids=[...R.fit,...R.near].slice(0,8).map(r=>r.c.id);S.sheet={kind:'wheel',ids,on:ids.slice(),rot:0,res:null};paintLayer();return}
+  if(a==='wtog'){const w=S.sheet;if(!w||w.spin)return;w.on=w.on.includes(v)?w.on.filter(x=>x!==v):w.ids.filter(x=>x===v||w.on.includes(x));w.res=null;paintLayer();return}
+  if(a==='wspin'){spinWheel();return}
+  if(a==='wgo'){S.sheet=null;paintLayer();location.hash='c-'+v;return}
   if(a==='me'){findMe();return}
   if(a==='fit'){mapFit();return}
   if(a==='nmap'){openNaver(+b.dataset.i);return}
