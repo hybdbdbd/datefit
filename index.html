@@ -3,7 +3,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="데이트핏 — 진주·김해 데이트 코스 추천 데모">
 <title>데이트핏</title>
-<style>html,body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<style>html,body{margin:0}img{max-width:100%}[hidden]{display:none!important}.nlbox textarea{width:100%;box-sizing:border-box;border:1.5px solid var(--line,#e5d9cc);border-radius:16px;padding:12px 14px;font:inherit;font-size:16px;line-height:1.5;resize:vertical;background:var(--card,#fff);color:inherit}.nlbox textarea:focus{outline:2px solid var(--link);outline-offset:1px}.nlres{margin-top:12px;padding:12px 14px;border-radius:14px;background:var(--butter)}
+</style>
 <script src="https://apis.openapi.sk.com/tmap/jsv2?version=1&appkey=6IrZ44VkAs1xBjnALhOu84RwcdxQQY5G2N1Ynlqw"></script>
 </head><body>
 <title>데이트핏</title>
@@ -474,6 +475,11 @@ function vPlan(){
   <section class="q" style="display:flex;flex-direction:column;gap:8px">
     <button class="optrow" data-act="toggle" data-k="first" aria-pressed="${c.first}"><span>처음 만나는 날<small>영화·감성 코스를 먼저</small></span><span class="switch"></span></button>
     <button class="optrow" data-act="toggle" data-k="noRaw" aria-pressed="${c.noRaw}"><span>날것은 빼주세요<small>회·사시미가 주메뉴인 곳</small></span><span class="switch"></span></button></section>
+  <section class="q nlbox"><h2>말로 찾기<small>문장으로 쓰면 위 조건으로 바꿔서 바로 추천해요</small></h2>
+    <form id="nl-form" class="nlform"><textarea id="nl-text" rows="3" placeholder="예) 토요일 저녁에 차 없이 김해에서, 술은 가볍게 한 잔하고 보드게임도 하고 싶어" aria-label="원하는 데이트를 문장으로 쓰기">${esc(S.nlText||'')}</textarea>
+    <button class="cta" type="submit" style="margin-top:10px">이 문장으로 코스 찾기${ic('arrow',20)}</button></form>
+    ${S.nlRes?`<div class="nlres" role="status"><b>이렇게 알아들었어요</b><div class="chips" style="margin-top:8px">${S.nlRes.got.length?S.nlRes.got.map(x=>`<span class="chip sm" aria-pressed="true">${esc(x)}</span>`).join(''):'<span class="hint">알아들은 조건이 없어요. 요일·시간·차·술·놀거리 단어를 넣어 보세요</span>'}</div>${S.nlRes.miss.length?`<p class="hint">${esc(S.nlRes.miss.join(' · '))}</p>`:''}</div>`:''}
+    <p class="hint">데모는 단어 규칙으로 바꿔요. 정식 버전은 AI가 문장을 이해해요</p></section>
   </div></div>
   <div class="dock"><a class="cta" href="#courses">${n?`맞는 코스 ${n}개 보기`:'조건에 가까운 코스 보기'}${ic('arrow',20)}</a></div>`;
 }
@@ -835,6 +841,29 @@ function render(keep){
 }
 window.addEventListener('hashchange',()=>{S.open=0;S.confirm=null;render()});
 
+function nl2cond(t){
+  t=String(t||'').replace(/\s+/g,' ');const set={},got=[],miss=[];const has=re=>re.test(t);
+  if(has(/진주/)){set.city='진주';got.push('진주')}else if(has(/김해/)){set.city='김해';got.push('김해')}
+  const wd=['월','화','수','목','금','토','일'];let dd=null;
+  if(has(/모레/))dd=2;else if(has(/내일/))dd=1;else if(has(/오늘/))dd=0;
+  else{const m=t.match(/([월화수목금토일])요일/)||(has(/주말/)?['','토']:null);if(m){const tgt=wd.indexOf(m[1]);const now=(new Date().getDay()+6)%7;dd=(tgt-now+7)%7}}
+  if(dd!==null){set.date=addDays(dd);got.push(dlabel(set.date))}
+  if(has(/저녁|밤|퇴근/)){set.time='evening';got.push('저녁')}else if(has(/늦은 ?오후|해질|노을/)){set.time='late';got.push('늦은 오후')}else if(has(/점심|낮|브런치|오전|아침/)){set.time='lunch';got.push('점심')}else if(has(/오후/)){set.time='afternoon';got.push('오후')}
+  const carNo=has(/차 ?없|차는 ?없|뚜벅|걸어|도보|대중교통|버스|경전철/);
+  if(carNo){set.move='walk';got.push('걸어서')}else if(has(/차 ?있|자차|드라이브|운전|차로|차 ?가지고|주차/)){set.move='car';got.push('차 있어요(주차 정보 함께)')}
+  const km=t.match(/(\d+(?:\.\d+)?)\s*(km|킬로)/),mm=t.match(/(\d{3,4})\s*m(?![a-z])/);
+  if(set.move!=='car'){if(mm){const v=+mm[1];set.limit=v<=500?500:v<=1000?1000:2000;got.push(dist(set.limit)+' 안')}else if(km){const v=+km[1]*1000;set.limit=v<=500?500:v<=1000?1000:2000;got.push(dist(set.limit)+' 안')}else if(has(/가까|조금만 걷|많이 안 걷/)){set.limit=500;got.push('500m 안')}}
+  if(has(/술 ?(은 )?(안|말고|빼|없이)|안 ?마셔|금주|논알콜/)){set.alc='none';got.push('술 없이')}
+  else if(has(/제대로|소주|맥주|주점|요리주점|이자카야|포차/)){set.alc='heavy';got.push('술 제대로')}
+  else if(has(/한 ?잔|칵테일|와인|위스키|하이볼|바에|바 /)){set.alc='light';got.push('가볍게 한 잔')}
+  const P=[['영화·공연',/영화|공연|연극/],['공방·체험',/공방|원데이|만들기|체험|향수|반지|도자기/],['보드게임·게임',/보드게임|오락실|게임/],['사진·포토부스',/네컷|사진|포토/],['노래방',/노래방|코인노래/],['룸카페·프라이빗',/룸카페|만화카페|프라이빗/],['스포츠·액티비티',/볼링|액티비티|운동|레일바이크|클라이밍/],['소품샵·쇼핑',/소품|쇼핑|구경/]];
+  const pl=P.filter(x=>x[1].test(t)).map(x=>x[0]);if(pl.length){set.play=pl;pl.forEach(x=>got.push((PLAYS.find(p=>p[0]===x)||[x,x])[1]))}
+  if(has(/처음|첫 ?데이트|소개팅|첫 ?만남/)){set.first=true;got.push('처음 만나는 날')}
+  if(has(/회 ?(는 )?(싫|빼|말고|못)|날것|사시미 ?(빼|싫|말고)|생선회 ?(빼|싫)/)){set.noRaw=true;got.push('날것은 빼고')}
+  const bud=t.match(/(\d+)\s*만\s*원/);if(bud)miss.push(`예산 ${bud[1]}만 원은 정식 버전에서 반영해요`);
+  if(has(/밀가루|글루텐|비건|채식|알레르기/))miss.push('음식 제약(밀가루·채식 등)은 정식 버전에서 반영해요');
+  return {set,got,miss};
+}
 document.addEventListener('click',e=>{
   const go=e.target.closest('[data-go]');if(go){location.hash=go.dataset.go;return}
   const b=e.target.closest('[data-act]');if(!b)return;
@@ -877,6 +906,14 @@ document.addEventListener('click',e=>{
     const show=copied=>{S.sheet={kind:'share',text,copied};paintLayer();if(!copied){const t=document.getElementById('share-text');t&&t.select()}};
     try{navigator.clipboard.writeText(text).then(()=>show(true),()=>show(false))}catch(err){show(false)}
     return}
+});
+document.addEventListener('submit',e=>{
+  if(e.target.id!=='nl-form')return;e.preventDefault();
+  const t=(document.getElementById('nl-text')||{}).value||'';S.nlText=t;const r=nl2cond(t);S.nlRes=r;
+  const c=S.cond;Object.entries(r.set).forEach(([k,v])=>{if(k==='city')S.city=v;else c[k]=v});
+  save();
+  if(!r.got.length){render(true);return}
+  location.hash='courses';setTimeout(()=>toast(`문장을 조건 ${r.got.length}개로 바꿨어요`),60);
 });
 document.addEventListener('change',e=>{
   const t=e.target;
