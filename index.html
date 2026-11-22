@@ -250,6 +250,15 @@ button.maplink{color:var(--link)}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 @keyframes stick{from{transform:scale(1.8) rotate(-18deg);opacity:0}to{opacity:1}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.gcard{background:var(--card);border-radius:22px;box-shadow:var(--shadow);padding:16px;margin-top:14px}
+.gcity2{font-size:14px;color:var(--sub);font-weight:700}.gtier2{font-family:var(--display);font-size:30px;line-height:1.1}
+.gn{font-size:13px;color:var(--sub)}.gn b{font-size:20px;color:var(--ink)}
+.gbar2{height:14px;border-radius:7px;background:#EFE6DB;margin-top:10px;overflow:hidden}.gbar2>div{height:100%;border-radius:7px;transition:width .4s}
+.ladder{display:flex;gap:4px;margin-top:10px}.rung{flex:1;text-align:center;font-size:11px;font-weight:700;padding:6px 0;border-radius:9px;background:#F3ECE4;color:#8A7F76;line-height:1.25}.rung small{display:block;font-weight:500;font-size:10px;opacity:.85}
+.couple{display:flex;gap:14px;align-items:center;background:var(--pink);border-radius:22px;padding:16px;margin-top:16px}.cfoot{flex:0 0 84px}
+.couple small{font-size:12.5px;font-weight:700;color:#7A3B2A}.dday{font-family:var(--display);font-size:34px;line-height:1.1;color:#9A3412}
+.cdate{font:inherit;font-size:14px;padding:8px 10px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.amb{background:var(--butter);border-radius:22px;padding:16px;margin-top:14px;font-size:14px;line-height:1.55}.ambh{display:flex;gap:6px;align-items:center;font-weight:700;font-size:15px;margin-bottom:6px}
 </style>
 
 <div class="app" id="app"></div>
@@ -313,10 +322,10 @@ const S={
   city:saved.city==='김해'?'김해':'진주',
   cond:Object.assign({date:today(),time:'afternoon',move:'walk',limit:1000,alc:'none',play:[],first:false,noRaw:false},saved.cond||{}),
   diary:Array.isArray(saved.diary)?saved.diary:[],
-  type:'all', picks:{}, open:0, sheet:null, visits:(saved.visits&&typeof saved.visits==='object')?saved.visits:{}, oslots:[]
+  type:'all', picks:{}, open:0, sheet:null, visits:(saved.visits&&typeof saved.visits==='object')?saved.visits:{}, oslots:[], couple:saved.couple||null, extra:(saved.extra&&typeof saved.extra==='object')?saved.extra:{}, resv:(saved.resv&&typeof saved.resv==='object')?saved.resv:{}
 };
 if(S.cond.date<today())S.cond.date=today();
-function save(){try{localStorage.setItem(LS,JSON.stringify({city:S.city,cond:S.cond,diary:S.diary,visits:S.visits}));return true}catch(e){return false}}
+function save(){try{localStorage.setItem(LS,JSON.stringify({city:S.city,cond:S.cond,diary:S.diary,visits:S.visits,couple:S.couple,extra:S.extra,resv:S.resv}));return true}catch(e){return false}}
 
 /* ---------- 추천 로직 ---------- */
 function stay(p){if(p.sub==='영화관')return 150;if(p.play==='공방·체험')return 90;return {'맛집':80,'카페':60,'술집':90,'산책·관광':50,'놀거리':60}[p.sec]}
@@ -429,7 +438,7 @@ function courseCard(r,i,big){
   return `<button class="card mini" data-go="c-${r.c.id}">${collage(r,'sm')}<div class="cbody"><span class="tag" style="background:${t.color}">${t.label} · ${esc(r.c.zone)}</span><p class="ctitle">${esc(r.c.title)}</p><p class="cstops">${names}</p><div class="reasons">${chips}</div></div></button>`;
 }
 function nav(cur){
-  const it=[['home','홈','home'],['courses','코스','route'],['stickers','스티커','star'],['diary','기록','book']];
+  const it=[['home','홈','home'],['courses','코스','route'],['stickers','게이지','star'],['diary','기록','book']];
   return `<nav class="nav" aria-label="하단 메뉴"><div>${it.map(x=>`<a href="#${x[0]}" ${cur===x[0]?'aria-current="page"':''}>${ic(x[2],20)}${x[1]}</a>`).join('')}</div></nav>`;
 }
 function citySeg(){return `<div class="seg" role="group" aria-label="지역">${['진주','김해'].map(c=>`<button data-act="city" data-v="${c}" aria-pressed="${S.city===c}">${c}</button>`).join('')}</div>`}
@@ -546,6 +555,7 @@ function stopHTML(r,s,i,car){
     ${p.wait?`<div class="box warn" style="margin-top:10px">웨이팅이 있을 수 있어요. 가기 전에 검색해 보세요.</div>`:''}
     ${kv.length?`<dl class="kv">${kv.map(k=>`<dt>${k[0]}</dt><dd>${esc(k[1])}</dd>`).join('')}</dl>`:'<p class="sub" style="margin-top:8px">영업시간과 가격 정보는 아직 없어요.</p>'}
     <div class="maplinks">${p.kakao?`<a class="maplink" href="${esc(p.kakao)}" target="_blank" rel="noopener">${ic('pin',18)}카카오맵에서 보기</a>`:''}${MAP?`<button class="maplink" data-act="nmap" data-i="${i}">${ic('route',18)}네이버지도 앱으로 길찾기</button>`:''}</div>
+    ${p.sec==='맛집'?`<div style="margin-top:6px">${S.resv[s.id]?`<span class="tag ok">예약 요청됨 · ${dlabel(S.resv[s.id].date)} ${S.resv[s.id].time} · ${S.resv[s.id].n}명</span>`:`<button class="chip sm" data-act="resv" data-id="${s.id}" data-t="${hm(s.t)}">${ic('check',15)}이 식당 예약하기 (무료)</button>`}</div>`:''}
     <div style="margin-top:6px">${S.visits[s.id]?`<span class="tag ok">방문 인증됨 · ${dlabel(S.visits[s.id])}</span>`:`<button class="chip sm" data-act="qr" data-id="${s.id}">${ic('camera',15)}방문 인증하기</button>`}</div>
     ${s.alts.length?`<div class="alts"><h4>다른 곳으로 바꾸기</h4><div class="chips">${s.alts.map(a=>`<button class="chip sm" data-act="swap" data-slot="${s.slot}" data-v="${a}">${esc(PL[a].name)}${PL[a].visited?' ·&nbsp;<span style="color:var(--ok)">가봤어요</span>':''}</button>`).join('')}</div></div>`:''}
   </div>`;
@@ -714,14 +724,29 @@ function stickerList(city){
   return [...types,...lms];
 }
 const stkHTML=(s,btn)=>`<${btn?'button data-act="stk" data-how="'+esc(s.on?'모은 스티커예요':s.how)+'"':'div'} class="stk ${s.on?'on':'off'}"><i style="background:${s.color}">${s.on?ic(s.icon,36):'<span style="font-size:24px;color:#8A7F76">?</span>'}</i>${esc(s.name)}</${btn?'button':'div'}>`;
+const TIERS=[[10,'브론즈','#C98B5A'],[50,'실버','#9AA3AD'],[100,'골드','#C9A227'],[200,'플래티넘','#4F9A92'],[300,'다이아','#5B8DEF'],[500,'마스터','#9A3412']];
+const HEARTFOOT='<svg width="84" height="84" viewBox="40 30 124 140" aria-hidden="true"><path d="M102 164.8C102 164.8 50 129.2 50 99.3A26 26 0 0 1 102 91.8A26 26 0 0 1 154 99.3C154 129.2 102 164.8 102 164.8Z" fill="#9A3412"/><circle cx="90.8" cy="45.2" r="11.2" fill="#9A3412"/><circle cx="108.4" cy="39.6" r="7.4" fill="#9A3412"/><circle cx="122" cy="42" r="6.6" fill="#9A3412"/><circle cx="133.2" cy="47.6" r="5.8" fill="#9A3412"/><circle cx="142" cy="56.4" r="5" fill="#9A3412"/></svg>';
+function cityOfPlace(id){const c=D.courses.find(c=>c.stops.some(x=>x.id===id||x.alts.includes(id)));return c?c.city:null}
+function gaugeCount(city){return Object.keys(S.visits).filter(id=>cityOfPlace(id)===city).length+(S.extra[city]||0)}
+function tierOf(n){const cur=TIERS.slice().reverse().find(t=>n>=t[0])||null;const next=TIERS.find(t=>n<t[0])||null;return {cur,next}}
+function gaugeCard(city){
+  const n=gaugeCount(city),{cur,next}=tierOf(n);const prev=cur?cur[0]:0;
+  const pct=next?Math.round((n-prev)/(next[0]-prev)*100):100;
+  return `<article class="gcard"><div class="row" style="justify-content:space-between;align-items:flex-end"><div><p class="gcity2">${city}</p><p class="gtier2" style="color:${cur?cur[2]:'#8A7F76'}">${cur?cur[1]:'아직 등급 없음'}</p></div><p class="gn">QR 방문 <b>${n}</b>회</p></div>
+  <div class="gbar2" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="${city} 다음 등급까지 진행"><div style="width:${pct}%;background:${cur?cur[2]:'#C9B8A8'}"></div></div>
+  <p class="sub" style="font-size:13px;margin-top:6px">${next?`다음 등급 <b>${next[1]}</b>까지 ${next[0]-n}회`:'최고 등급 마스터를 찍었어요'}</p>
+  <div class="ladder">${TIERS.map(t=>`<span class="rung ${n>=t[0]?'on':''}" style="${n>=t[0]?'background:'+t[2]+';color:#fff':''}">${t[1]}<small>${t[0]}</small></span>`).join('')}</div>
+  <button class="chip sm" data-act="g-add" data-v="${city}" style="margin-top:10px">${ic('plus',15)}데모: 방문 10회 더하기</button></article>`;
+}
 function vStickers(){
-  const L=stickerList(S.city),n=L.filter(s=>s.on).length;
-  return `<div class="pad"><header class="top">${citySeg()}<span class="display" style="font-size:26px">${n}<span style="font-size:17px;color:var(--sub)"> / ${L.length}</span></span></header>
-  <h1 class="display" style="font-size:28px;margin-top:16px">${S.city} 스티커북</h1>
-  <p class="sub" style="font-size:14px;margin-top:4px">코스를 다녀왔다고 기록하면 스티커가 붙어요</p>
-  <section class="board" aria-label="스티커 모음">${L.map(s=>stkHTML(s,true)).join('')}</section>
-  <section class="reward"><div class="grow"><small>${L.length}개를 다 모으면</small><br><b style="font-size:16px">지역 제휴 혜택</b><p>아직 계획 단계예요. 지자체·지역 상권과 협의해 정할 예정이에요.</p></div><span class="n">${n}/${L.length}</span></section>
-  ${n?'':`<div style="margin-top:16px"><a class="cta ghost" href="#courses">첫 스티커 받으러 가기</a></div>`}
+  const cities=['진주','김해'];const masters=cities.filter(c=>gaugeCount(c)>=500).length;const plat=cities.filter(c=>gaugeCount(c)>=200).length;
+  const dd=S.couple?Math.floor((new Date(today()+'T00:00:00')-new Date(S.couple+'T00:00:00'))/86400000)+1:null;
+  return `<div class="pad"><header class="top"><h1 class="display" style="font-size:28px">지역 게이지</h1><span class="sub" style="font-size:13px">QR로 인증한 방문만 쌓여요</span></header>
+  <section class="couple"><div class="cfoot">${HEARTFOOT}</div><div class="grow"><small>둘이서 함께한 발자국</small>${dd&&dd>0?`<p class="dday">D+${dd}</p><p class="sub" style="font-size:12.5px">${dlabel(S.couple)}부터 · 커플 연동</p>`:`<p class="sub" style="font-size:13px;margin:4px 0 8px">처음 만난 날을 넣으면 D+일수가 발자국 마크에 떠요</p>`}
+  <div class="row" style="gap:6px;margin-top:6px"><input type="date" id="couple-date" max="${today()}" value="${S.couple||''}" aria-label="처음 만난 날" class="cdate"><button class="chip sm" data-act="couple-save">저장</button></div></div></section>
+  ${cities.map(gaugeCard).join('')}
+  <section class="amb"><p class="ambh">${ic('star',18)} 데이트핏 앰버서더</p><p>여러 도시에서 마스터를 찍거나, 경상도에서 플래티넘·마스터를 여러 개 모은 커플을 앰버서더로 모셔요. 앰버서더의 추천과 영상에는 ‘진주 마스터’ 같은 인증이 함께 보여요.</p><p class="sub" style="font-size:12.5px;margin-top:6px">지금: 마스터 ${masters}곳 · 플래티넘 이상 ${plat}곳. 정확한 기준은 계획 단계예요.</p></section>
+  <p class="note">등급: 10 브론즈 · 50 실버 · 100 골드 · 200 플래티넘 · 300 다이아 · 500 마스터. 실제 서비스에서는 가게 테이블의 QR을 찍을 때마다 1회가 쌓여요. 이 데모의 ‘방문 10회 더하기’는 등급이 바뀌는 모습을 보여주기 위한 버튼이에요. <button data-act="g-reset">데모 방문 기록 지우기</button></p>
   </div>${nav('stickers')}`;
 }
 
@@ -782,8 +807,9 @@ function sheetHTML(){
    <li>평점과 태그는 카카오맵에 표시된 그대로예요.</li>
    <li>술집의 "가볍게/제대로" 구분은 업종 이름을 보고 나눈 거예요.</li>
    <li>사진은 아직 없어요. 직접 찍었거나 사용 허락을 받은 사진만 넣을 예정이에요.</li>
-   <li>스티커와 기록은 이 기기의 브라우저에만 저장돼요. 로그인이나 서버는 없는 데모예요.</li></ul>
+   <li>지역 게이지, 커플 날짜, 예약 요청, 기록은 이 기기의 브라우저에만 저장돼요. 로그인이나 서버는 없는 데모예요.</li></ul>
    <div style="margin-top:18px"><button class="cta" data-act="close">알겠어요</button></div>`;
+  if(s.kind==='resv'){const t0=mins(s.t);const opts=[-60,-30,0,30,60].map(d=>hm(Math.round((t0+d)/30)*30));inner=`<h2>식당 예약</h2><p style="margin-top:6px"><b>${esc(PL[s.id].name)}</b> · ${dlabel(S.cond.date)}</p><div class="row" style="gap:8px;margin-top:12px"><label class="grow">시간<select id="resv-time" class="cdate" style="width:100%">${[...new Set(opts)].map(o=>`<option ${o===hm(t0)?'selected':''}>${o}</option>`).join('')}</select></label><label class="grow">인원<select id="resv-n" class="cdate" style="width:100%">${[2,3,4,5,6].map(n=>`<option value="${n}">${n}명</option>`).join('')}</select></label></div><ul><li>이용자는 예약 수수료가 없어요. 코스 추천부터 예약까지 모두 무료예요.</li><li>가게는 예약 1건당 50원을 내는 구조로 계획하고 있어요.</li><li>이 데모에서는 실제 가게로 예약이 가지 않아요.</li></ul><div class="row" style="margin-top:14px"><button class="cta ghost" data-act="close">닫기</button><button class="cta" data-act="resv-ok" data-id="${s.id}">예약 요청</button></div>`}
   if(s.kind==='qr')inner=`<h2>방문 인증</h2><p style="margin-top:6px"><b>${esc(PL[s.id].name)}</b></p><ul><li>실제 서비스에서는 가게에 놓인 QR을 카메라로 찍어서 인증해요.</li><li>이 데모에는 QR이 없어서 아래 버튼으로 대신해요.</li><li>인증 기록은 가게에 보내는 리포트의 "방문 커플 수"로 집계할 계획이에요. 누가 왔는지는 가게에 알려주지 않아요.</li></ul><div class="row" style="margin-top:14px"><button class="cta ghost" data-act="close">닫기</button><button class="cta" data-act="qr-ok" data-id="${s.id}">인증한 걸로 하기</button></div>`;
   if(s.kind==='share')inner=`<h2>코스 공유</h2><p style="margin-top:6px">${s.copied?'복사했어요. 메신저에 붙여 넣으면 돼요.':'아래 내용을 길게 눌러 복사해 주세요.'}</p><textarea id="share-text" readonly>${esc(s.text)}</textarea><div style="margin-top:12px"><button class="cta" data-act="close">닫기</button></div>`;
   if(s.kind==='party')inner=`<h2>${s.list.length?'스티커가 붙었어요!':'기록에 담았어요'}</h2><p style="margin-top:6px">${esc(s.title)}</p>${s.list.length?`<div class="party">${s.list.map(x=>stkHTML(x)).join('')}</div>`:'<p style="margin-top:8px">이 코스로 받을 스티커는 이미 다 모았어요.</p>'}<div class="row" style="margin-top:14px"><button class="cta ghost" data-act="close" data-then="stickers">스티커북 보기</button><button class="cta" data-act="close">사진·메모 남기기</button></div>`;
@@ -880,6 +906,11 @@ document.addEventListener('click',e=>{
   if(a==='swap'){const id=route().slice(2);(S.picks[id]=S.picks[id]||{})[b.dataset.slot]=v;render(true);toast(`${PL[v].name}(으)로 바꿨어요`);return}
   if(a==='stk'){toast(b.dataset.how);return}
   if(a==='qr'){S.sheet={kind:'qr',id:b.dataset.id};paintLayer();return}
+  if(a==='resv'){S.sheet={kind:'resv',id:b.dataset.id,t:b.dataset.t};paintLayer();return}
+  if(a==='resv-ok'){const t=document.getElementById('resv-time'),n=document.getElementById('resv-n');S.resv[b.dataset.id]={date:S.cond.date,time:t?t.value:'',n:n?+n.value:2};save();S.sheet=null;render(true);toast('예약 요청을 보냈어요 (데모)');return}
+  if(a==='g-add'){S.extra[v]=(S.extra[v]||0)+10;save();render(true);const {cur}=tierOf(gaugeCount(v));toast(`${v} 방문 ${gaugeCount(v)}회${cur?' · '+cur[1]:''}`);return}
+  if(a==='g-reset'){S.extra={};save();render(true);toast('데모로 더한 방문을 지웠어요');return}
+  if(a==='couple-save'){const el=document.getElementById('couple-date');if(el&&el.value&&el.value<=today()){S.couple=el.value;save();render(true);toast('처음 만난 날을 저장했어요')}else toast('오늘이나 그 전 날짜를 골라 주세요');return}
   if(a==='qr-ok'){S.visits[b.dataset.id]=today();save();S.sheet=null;render(true);toast('방문을 인증했어요');return}
   if(a==='oslot'){S.oslots=S.oslots.includes(v)?S.oslots.filter(x=>x!==v):[...S.oslots,v];render(true);return}
   if(a==='stop'){goStop(+b.dataset.i);return}
@@ -898,7 +929,7 @@ document.addEventListener('click',e=>{
     const en=S.diary.find(x=>x.id===b.dataset.id);const before=stickerList(en.city).filter(s=>s.on).map(s=>s.key);
     en.status='done';save();
     const got=stickerList(en.city).filter(s=>s.on&&!before.includes(s.key));
-    clearTimeout(toastT);S.toast=null;S.sheet={kind:'party',list:got,title:`${dlabel(en.date)} · ${en.title}`};render(true);return}
+    clearTimeout(toastT);S.toast=null;S.sheet={kind:'party',list:[],title:`${dlabel(en.date)} · ${en.title}`};render(true);return}
   if(a==='del'){const id=b.dataset.id;if(S.confirm!==id){S.confirm=id;render(true);return}S.diary=S.diary.filter(x=>x.id!==id);S.confirm=null;save();render(true);toast('지웠어요');return}
   if(a==='share'){
     const id=b.dataset.id,cs=D.courses.find(x=>x.id===id),r=resolve(cs,c,S.picks[id]);
