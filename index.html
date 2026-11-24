@@ -4,6 +4,14 @@
 <meta name="description" content="데이트핏 — 진주·김해 데이트 코스 추천 데모">
 <title>데이트핏</title>
 <style>html,body{margin:0}img{max-width:100%}[hidden]{display:none!important}.nlbox textarea{width:100%;box-sizing:border-box;border:1.5px solid var(--line,#e5d9cc);border-radius:16px;padding:12px 14px;font:inherit;font-size:16px;line-height:1.5;resize:vertical;background:var(--card,#fff);color:inherit}.nlbox textarea:focus{outline:2px solid var(--link);outline-offset:1px}.nlres{margin-top:12px;padding:12px 14px;border-radius:14px;background:var(--butter)}
+.rvbox{margin-top:12px;padding-top:10px;border-top:1px solid #EADFD2}
+.rvhead h4{font-size:14px;margin:0}
+.rvlist{list-style:none;padding:0;margin:8px 0 0;display:flex;flex-direction:column;gap:8px}
+.rv{background:#FBF6F1;border-radius:14px;padding:10px 12px;font-size:13.5px}
+.rv.rvm{background:#FFF1E6;box-shadow:inset 0 0 0 1.5px #9A3412}
+.rvstar{color:#C2410C;font-size:13px;letter-spacing:1px}
+.starbtn{font-size:28px;line-height:1;color:#C2410C;background:none;border:0;padding:4px;min-width:44px;min-height:44px;cursor:pointer}
+#rv-text{width:100%;box-sizing:border-box;border-radius:14px;border:1px solid #DCCFC2;padding:10px 12px;font:inherit;font-size:15px}
 </style>
 <script src="https://apis.openapi.sk.com/tmap/jsv2?version=1&appkey=6IrZ44VkAs1xBjnALhOu84RwcdxQQY5G2N1Ynlqw"></script>
 </head><body>
@@ -322,10 +330,10 @@ const S={
   city:saved.city==='김해'?'김해':'진주',
   cond:Object.assign({date:today(),time:'afternoon',move:'walk',limit:1000,alc:'none',play:[],first:false,noRaw:false},saved.cond||{}),
   diary:Array.isArray(saved.diary)?saved.diary:[],
-  type:'all', picks:{}, open:0, sheet:null, visits:(saved.visits&&typeof saved.visits==='object')?saved.visits:{}, oslots:[], couple:saved.couple||null, extra:(saved.extra&&typeof saved.extra==='object')?saved.extra:{}, resv:(saved.resv&&typeof saved.resv==='object')?saved.resv:{}
+  type:'all', picks:{}, open:0, sheet:null, visits:(saved.visits&&typeof saved.visits==='object')?saved.visits:{}, oslots:[], couple:saved.couple||null, extra:(saved.extra&&typeof saved.extra==='object')?saved.extra:{}, resv:(saved.resv&&typeof saved.resv==='object')?saved.resv:{}, reviews:(saved.reviews&&typeof saved.reviews==='object')?saved.reviews:{}, rvStar:5
 };
 if(S.cond.date<today())S.cond.date=today();
-function save(){try{localStorage.setItem(LS,JSON.stringify({city:S.city,cond:S.cond,diary:S.diary,visits:S.visits,couple:S.couple,extra:S.extra,resv:S.resv}));return true}catch(e){return false}}
+function save(){try{localStorage.setItem(LS,JSON.stringify({city:S.city,cond:S.cond,diary:S.diary,visits:S.visits,couple:S.couple,extra:S.extra,resv:S.resv,reviews:S.reviews}));return true}catch(e){return false}}
 
 /* ---------- 추천 로직 ---------- */
 function stay(p){if(p.sub==='영화관')return 150;if(p.play==='공방·체험')return 90;return {'맛집':80,'카페':60,'술집':90,'산책·관광':50,'놀거리':60}[p.sec]}
@@ -557,6 +565,7 @@ function stopHTML(r,s,i,car){
     <div class="maplinks">${p.kakao?`<a class="maplink" href="${esc(p.kakao)}" target="_blank" rel="noopener">${ic('pin',18)}카카오맵에서 보기</a>`:''}${MAP?`<button class="maplink" data-act="nmap" data-i="${i}">${ic('route',18)}네이버지도 앱으로 길찾기</button>`:''}</div>
     ${p.sec==='맛집'?`<div style="margin-top:6px">${S.resv[s.id]?`<span class="tag ok">예약 요청됨 · ${dlabel(S.resv[s.id].date)} ${S.resv[s.id].time} · ${S.resv[s.id].n}명</span>`:`<button class="chip sm" data-act="resv" data-id="${s.id}" data-t="${hm(s.t)}">${ic('check',15)}이 식당 예약하기 (무료)</button>`}</div>`:''}
     <div style="margin-top:6px">${S.visits[s.id]?`<span class="tag ok">방문 인증됨 · ${dlabel(S.visits[s.id])}</span>`:`<button class="chip sm" data-act="qr" data-id="${s.id}">${ic('camera',15)}방문 인증하기</button>`}</div>
+    ${reviewBlock(s.id)}
     ${s.alts.length?`<div class="alts"><h4>다른 곳으로 바꾸기</h4><div class="chips">${s.alts.map(a=>`<button class="chip sm" data-act="swap" data-slot="${s.slot}" data-v="${a}">${esc(PL[a].name)}${PL[a].visited?' ·&nbsp;<span style="color:var(--ok)">가봤어요</span>':''}</button>`).join('')}</div></div>`:''}
   </div>`;
   return `<li class="stop" id="stop-${i}">${leg}<span class="dotc" style="background:${sec[0]}">${ic(picon(p),18)}<span class="dnum" aria-hidden="true">${i+1}</span></span>
@@ -728,6 +737,16 @@ const TIERS=[[10,'브론즈','#C98B5A'],[50,'실버','#9AA3AD'],[100,'골드','#
 const HEARTFOOT='<svg width="84" height="84" viewBox="40 30 124 140" aria-hidden="true"><path d="M102 164.8C102 164.8 50 129.2 50 99.3A26 26 0 0 1 102 91.8A26 26 0 0 1 154 99.3C154 129.2 102 164.8 102 164.8Z" fill="#9A3412"/><circle cx="90.8" cy="45.2" r="11.2" fill="#9A3412"/><circle cx="108.4" cy="39.6" r="7.4" fill="#9A3412"/><circle cx="122" cy="42" r="6.6" fill="#9A3412"/><circle cx="133.2" cy="47.6" r="5.8" fill="#9A3412"/><circle cx="142" cy="56.4" r="5" fill="#9A3412"/></svg>';
 function cityOfPlace(id){const c=D.courses.find(c=>c.stops.some(x=>x.id===id||x.alts.includes(id)));return c?c.city:null}
 function gaugeCount(city){return Object.keys(S.visits).filter(id=>cityOfPlace(id)===city).length+(S.extra[city]||0)}
+function rvRank(label){return TIERS.findIndex(x=>x[1]===label)}
+function reviewBlock(id){
+  const list=(S.reviews[id]||[]).slice().sort((a,b)=>rvRank(b.tier)-rvRank(a.tier)||b.d.localeCompare(a.d));
+  const mine=list.some(r=>r.mine);
+  const head=`<div class="rvhead"><h4>방문 인증 후기</h4><span class="sub" style="font-size:12px">QR로 다녀간 사람만 쓸 수 있어요 · 등급이 높을수록 위에 보여요</span></div>`;
+  const items=list.map(r=>{const tc=(TIERS.find(x=>x[1]===r.tier)||[0,'','#8A7F76'])[2];const master=rvRank(r.tier)>=5;
+    return `<li class="rv${master?' rvm':''}"><div class="row" style="gap:6px;flex-wrap:wrap"><span class="tag" style="background:${tc};color:#fff">${esc(r.tier||'등급 없음')}</span>${master?'<span class="tag" style="background:#1F1A17;color:#F4B183">마스터 픽</span>':''}<span class="rvstar" aria-label="별점 ${r.s}점">${'★'.repeat(r.s)}${'☆'.repeat(5-r.s)}</span><span class="sub" style="font-size:11.5px">${dlabel(r.d)}${r.mine?' · 내 후기':''}</span></div><p style="margin-top:4px">${esc(r.t)}</p></li>`}).join('');
+  const cta=S.visits[id]?(mine?'':`<button class="chip sm" data-act="rv" data-id="${id}">${ic('star',15)}후기 남기기</button>`):`<p class="sub" style="font-size:12px">방문 인증을 하면 후기를 남길 수 있어요</p>`;
+  return `<div class="rvbox">${head}${items?`<ul class="rvlist">${items}</ul>`:'<p class="sub" style="font-size:12.5px;margin-top:4px">아직 후기가 없어요.</p>'}<div style="margin-top:6px">${cta}</div></div>`;
+}
 function tierOf(n){const cur=TIERS.slice().reverse().find(t=>n>=t[0])||null;const next=TIERS.find(t=>n<t[0])||null;return {cur,next}}
 function gaugeCard(city){
   const n=gaugeCount(city),{cur,next}=tierOf(n);const prev=cur?cur[0]:0;
@@ -807,10 +826,11 @@ function sheetHTML(){
    <li>평점과 태그는 카카오맵에 표시된 그대로예요.</li>
    <li>술집의 "가볍게/제대로" 구분은 업종 이름을 보고 나눈 거예요.</li>
    <li>사진은 아직 없어요. 직접 찍었거나 사용 허락을 받은 사진만 넣을 예정이에요.</li>
-   <li>지역 게이지, 커플 날짜, 예약 요청, 기록은 이 기기의 브라우저에만 저장돼요. 로그인이나 서버는 없는 데모예요.</li></ul>
+   <li>지역 게이지, 커플 날짜, 예약 요청, 후기, 기록은 이 기기의 브라우저에만 저장돼요. 로그인이나 서버는 없는 데모예요.</li></ul>
    <div style="margin-top:18px"><button class="cta" data-act="close">알겠어요</button></div>`;
   if(s.kind==='resv'){const t0=mins(s.t);const opts=[-60,-30,0,30,60].map(d=>hm(Math.round((t0+d)/30)*30));inner=`<h2>식당 예약</h2><p style="margin-top:6px"><b>${esc(PL[s.id].name)}</b> · ${dlabel(S.cond.date)}</p><div class="row" style="gap:8px;margin-top:12px"><label class="grow">시간<select id="resv-time" class="cdate" style="width:100%">${[...new Set(opts)].map(o=>`<option ${o===hm(t0)?'selected':''}>${o}</option>`).join('')}</select></label><label class="grow">인원<select id="resv-n" class="cdate" style="width:100%">${[2,3,4,5,6].map(n=>`<option value="${n}">${n}명</option>`).join('')}</select></label></div><ul><li>이용자는 예약 수수료가 없어요. 코스 추천부터 예약까지 모두 무료예요.</li><li>가게는 예약 1건당 50원을 내는 구조로 계획하고 있어요.</li><li>이 데모에서는 실제 가게로 예약이 가지 않아요.</li></ul><div class="row" style="margin-top:14px"><button class="cta ghost" data-act="close">닫기</button><button class="cta" data-act="resv-ok" data-id="${s.id}">예약 요청</button></div>`}
   if(s.kind==='qr')inner=`<h2>방문 인증</h2><p style="margin-top:6px"><b>${esc(PL[s.id].name)}</b></p><ul><li>실제 서비스에서는 가게에 놓인 QR을 카메라로 찍어서 인증해요.</li><li>이 데모에는 QR이 없어서 아래 버튼으로 대신해요.</li><li>인증 기록은 가게에 보내는 리포트의 "방문 커플 수"로 집계할 계획이에요. 누가 왔는지는 가게에 알려주지 않아요.</li></ul><div class="row" style="margin-top:14px"><button class="cta ghost" data-act="close">닫기</button><button class="cta" data-act="qr-ok" data-id="${s.id}">인증한 걸로 하기</button></div>`;
+  if(s.kind==='review'){const city=cityOfPlace(s.id),{cur}=tierOf(gaugeCount(city));inner=`<h2>후기 남기기</h2><p style="margin-top:6px"><b>${esc(PL[s.id].name)}</b></p><div class="row" style="gap:4px;margin-top:10px" role="group" aria-label="별점">${[1,2,3,4,5].map(n=>`<button class="starbtn" data-act="rv-star" data-v="${n}" aria-pressed="${n<=S.rvStar}" aria-label="${n}점">${n<=S.rvStar?'★':'☆'}</button>`).join('')}</div><textarea id="rv-text" maxlength="80" rows="3" placeholder="예) 창가 자리가 조용해서 대화하기 좋았어요" style="margin-top:10px">${esc(S.rvDraft||'')}</textarea><ul><li>지금 내 등급: <b>${city} ${cur?cur[1]:'등급 없음'}</b>. 후기에 이 등급이 함께 보여요.</li><li>등급이 높은 사람의 후기가 위에 오고, 마스터 등급 후기에는 "마스터 픽"이 붙어요.</li><li>이 데모의 후기는 이 기기에만 저장돼요.</li></ul><div class="row" style="margin-top:14px"><button class="cta ghost" data-act="close">나중에</button><button class="cta" data-act="rv-ok" data-id="${s.id}">후기 올리기</button></div>`}
   if(s.kind==='share')inner=`<h2>코스 공유</h2><p style="margin-top:6px">${s.copied?'복사했어요. 메신저에 붙여 넣으면 돼요.':'아래 내용을 길게 눌러 복사해 주세요.'}</p><textarea id="share-text" readonly>${esc(s.text)}</textarea><div style="margin-top:12px"><button class="cta" data-act="close">닫기</button></div>`;
   if(s.kind==='party')inner=`<h2>${s.list.length?'스티커가 붙었어요!':'기록에 담았어요'}</h2><p style="margin-top:6px">${esc(s.title)}</p>${s.list.length?`<div class="party">${s.list.map(x=>stkHTML(x)).join('')}</div>`:'<p style="margin-top:8px">이 코스로 받을 스티커는 이미 다 모았어요.</p>'}<div class="row" style="margin-top:14px"><button class="cta ghost" data-act="close" data-then="stickers">스티커북 보기</button><button class="cta" data-act="close">사진·메모 남기기</button></div>`;
   if(s.kind==='wheel')inner=wheelHTML(s);
@@ -911,7 +931,10 @@ document.addEventListener('click',e=>{
   if(a==='g-add'){S.extra[v]=(S.extra[v]||0)+10;save();render(true);const {cur}=tierOf(gaugeCount(v));toast(`${v} 방문 ${gaugeCount(v)}회${cur?' · '+cur[1]:''}`);return}
   if(a==='g-reset'){S.extra={};save();render(true);toast('데모로 더한 방문을 지웠어요');return}
   if(a==='couple-save'){const el=document.getElementById('couple-date');if(el&&el.value&&el.value<=today()){S.couple=el.value;save();render(true);toast('처음 만난 날을 저장했어요')}else toast('오늘이나 그 전 날짜를 골라 주세요');return}
-  if(a==='qr-ok'){S.visits[b.dataset.id]=today();save();S.sheet=null;render(true);toast('방문을 인증했어요');return}
+  if(a==='qr-ok'){S.visits[b.dataset.id]=today();save();S.rvStar=5;S.sheet={kind:'review',id:b.dataset.id};render(true);toast('방문을 인증했어요');return}
+  if(a==='rv'){S.rvStar=5;S.sheet={kind:'review',id:b.dataset.id};paintLayer();return}
+  if(a==='rv-star'){const el=document.getElementById('rv-text');S.rvDraft=el?el.value:'';S.rvStar=+v;paintLayer();return}
+  if(a==='rv-ok'){const id=b.dataset.id,el=document.getElementById('rv-text'),tx=(el&&el.value||'').trim();if(!tx){toast('한 줄만 적어 주세요');return}const city=cityOfPlace(id),{cur}=tierOf(gaugeCount(city));(S.reviews[id]=S.reviews[id]||[]).push({s:S.rvStar,t:tx.slice(0,80),d:today(),tier:cur?cur[1]:'',mine:true});S.rvDraft='';save();S.sheet=null;render(true);toast(cur?`${city} ${cur[1]} 후기로 올렸어요`:'후기를 올렸어요');return}
   if(a==='oslot'){S.oslots=S.oslots.includes(v)?S.oslots.filter(x=>x!==v):[...S.oslots,v];render(true);return}
   if(a==='stop'){goStop(+b.dataset.i);return}
   if(a==='wheel'){const R=ranked(),ids=[...R.fit,...R.near].slice(0,8).map(r=>r.c.id);S.sheet={kind:'wheel',ids,on:ids.slice(),rot:0,res:null};paintLayer();return}
