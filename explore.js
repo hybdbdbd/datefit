@@ -4,6 +4,7 @@
    - 카카오·네이버 지도는 검색 링크로만 연결하고 응답을 저장하지 않아요.
    - 휴대폰 위치(GPS)는 쓰지 않아요. 지역은 직접 고릅니다. */
 const XR = 'data/sbiz/';
+const XV = '20261128a'; // 데이터나 이 파일을 바꾸면 값도 바꿔 주세요(브라우저 캐시 갱신)
 const REPORT_URL = ''; // 휴무 신고용 구글폼 주소를 넣으면 신고 버튼이 그 폼을 엽니다. 비어 있으면 신고 내용을 복사합니다.
 const X = {idx: null, files: {}, V: null, sido: '경상남도', sgg: '경상남도_진주시.json', loading: false, err: null};
 const XG = ['식사', '카페', '디저트', '술', '놀거리', '체험', '소품·서점', '꽃집', '숙박'];
@@ -37,8 +38,8 @@ async function xload() {
   if (X.idx || X.loading) return;
   X.loading = true;
   try {
-    X.idx = await fetch(XR + 'index.json').then(r => r.json());
-    try { X.V = await fetch('data/verified.json').then(r => r.ok ? r.json() : {}); } catch (e) { X.V = {}; }
+    X.idx = await fetch(XR + 'index.json?v=' + XV).then(r => r.json());
+    try { X.V = await fetch('data/verified.json?v=' + XV).then(r => r.ok ? r.json() : {}); } catch (e) { X.V = {}; }
   } catch (e) { X.err = '지역 목록을 불러오지 못했어요'; }
   X.loading = false; render(true);
 }
@@ -46,7 +47,7 @@ async function xfile(fn) {
   if (X.files[fn]) return X.files[fn];
   if (X.files[fn] === undefined) {
     X.files[fn] = null;
-    fetch(XR + encodeURIComponent(fn)).then(r => r.json()).then(d => { X.files[fn] = d; render(true); }).catch(() => { delete X.files[fn]; toast('가게 정보를 불러오지 못했어요'); });
+    fetch(XR + encodeURIComponent(fn) + '?v=' + XV).then(r => r.json()).then(d => { X.files[fn] = d; render(true); }).catch(() => { delete X.files[fn]; toast('가게 정보를 불러오지 못했어요'); });
   }
   return null;
 }
