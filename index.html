@@ -57,6 +57,15 @@ h1,h2,h3,p{margin:0}
 .cta{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:58px;padding:0 20px;border-radius:29px;background:var(--ink);color:var(--bg);font-size:16px;font-weight:700;text-decoration:none;transition:transform .12s}
 .cta:active,.card:active,.typecard:active{transform:scale(.98)}
 .cta.ghost{background:var(--card);color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--ink)}
+.cta.quiet{min-height:48px;background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--line);font-size:15px;font-weight:600}
+.fold{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:12px 16px;border-radius:18px;background:var(--card);box-shadow:inset 0 0 0 1.5px var(--line);text-align:left;font-size:15px;font-weight:600;color:var(--ink)}
+.fold small{display:block;margin-top:2px;font-size:12px;font-weight:400;color:var(--sub)}
+.fold .chev{margin-left:auto;font-size:13px;font-weight:600;color:var(--sub);white-space:nowrap}
+.foldbody{margin-top:14px}
+.textbtn{display:inline-flex;align-items:center;gap:4px;min-height:32px;padding:0 2px;background:none;font-size:13px;color:var(--sub);text-decoration:underline;text-underline-offset:3px}
+.wheelbtn.slim{min-height:0;padding:10px 14px;background:transparent;box-shadow:inset 0 0 0 1.5px var(--line)}
+.wheelbtn.slim .wheelico{flex:0 0 24px;width:24px!important;height:24px!important;min-width:24px}
+.wheelbtn.slim b{font-size:14px}
 .cta.soft{background:var(--peach);color:var(--ink)}
 .cta[disabled]{opacity:.45}
 .chip{display:inline-flex;align-items:center;gap:6px;min-height:42px;padding:0 15px;border-radius:21px;background:var(--card);box-shadow:inset 0 0 0 1.5px var(--line);font-size:14px;white-space:nowrap}
@@ -272,7 +281,7 @@ button.maplink{color:var(--link)}
 </style>
 
 <div class="app" id="app"></div>
-<script src="explore.js?v=20261128a"></script>
+<script src="explore.js?v=20261128b"></script>
 <div id="layer"></div>
 
 <script>
@@ -476,30 +485,40 @@ function vPlan(){
   const sat=(()=>{const d=new Date();const n=(6-d.getDay()+7)%7;return addDays(n)})();
   const dates=[[today(),'오늘'],[addDays(1),'내일'],[sat,'이번 토요일']].filter((x,i,a)=>a.findIndex(y=>y[0]===x[0])===i);
   const R=ranked();const n=R.fit.length;
+  const F=S.folds||{};const custom=!dates.some(d=>d[0]===c.date);
+  const advSum=[custom?dlabel(c.date):'',!car&&c.limit!==1000?({500:'500m 안',2000:'2km 안',0:'거리 상관없음'})[c.limit]:'',c.play.length?`놀거리 ${c.play.length}개`:'',c.first?'처음 만나는 날':'',c.noRaw?'날것 빼기':''].filter(Boolean);
+  const advOpen=F.planAdv;
   return `<div class="pad">
   <header class="top"><a class="iconbtn" href="#home" aria-label="홈으로">${ic('back',20)}</a>${citySeg()}</header>
   <h1 class="display" style="font-size:30px;margin-top:16px">어떤 하루로 할까?</h1>
   <div>
   <section class="q"><h2>언제 만나요</h2>
     <div class="chips">${dates.map(d=>`<button class="chip" data-act="set" data-k="date" data-v="${d[0]}" aria-pressed="${c.date===d[0]}">${d[1]} <span style="opacity:.7">${dlabel(d[0])}</span></button>`).join('')}
-    <input class="dateinput" id="date-input" type="date" aria-label="날짜 직접 고르기" min="${today()}" value="${c.date}"></div>
+</div>
     <div class="chips" style="margin-top:10px">${Object.entries(TIMES).map(([k,v])=>`<button class="chip" data-act="set" data-k="time" data-v="${k}" aria-pressed="${c.time===k}">${v[0]} <span style="opacity:.7">${hm(v[1])}~</span></button>`).join('')}</div>
     <p class="hint">고른 요일과 시간에 문 여는지 코스마다 확인해 드려요</p></section>
   <section class="q"><h2>어떻게 다녀요</h2>
     <div class="opt2"><button class="optcard" data-act="set" data-k="move" data-v="walk" aria-pressed="${!car}">걸어서<small>실제 도보 경로로 잰 거리</small></button><button class="optcard" data-act="set" data-k="move" data-v="car" aria-pressed="${car}">차 있어요<small>주차 정보를 같이 봐요</small></button></div>
-    ${car?'':`<div class="chips" style="margin-top:10px">${[[500,'500m 안'],[1000,'1km 안'],[2000,'2km 안'],[0,'상관없어요']].map(x=>`<button class="chip sm" data-act="set" data-k="limit" data-v="${x[0]}" aria-pressed="${c.limit===x[0]}">${x[1]}</button>`).join('')}</div><p class="hint">코스 안에서 가장 먼 두 곳 사이를 걷는 거리예요</p>`}</section>
+</section>
   <section class="q"><h2>술<small>${car?'운전하는 날은 술집이 빠져요':''}</small></h2>
     <div class="${car?'dim':''}" style="display:flex;flex-direction:column;gap:8px" ${car?'aria-disabled="true"':''}>${[['none','안 마셔요',''],['light','가볍게 한 잔','칵테일·와인·위스키 바'],['heavy','제대로','주점·요리주점']].map(x=>`<button class="optrow" data-act="set" data-k="alc" data-v="${x[0]}" aria-pressed="${(car?'none':c.alc)===x[0]}" ${car?'tabindex="-1"':''}><span>${x[1]}<small>${x[2]}</small></span><span class="dot"></span></button>`).join('')}</div></section>
-  <section class="q"><h2>놀거리<small>여러 개 골라도 돼요</small></h2>
+  <section class="q"><button class="fold" data-act="fold" data-k="planAdv" aria-expanded="${advOpen?'true':'false'}"><span>더 자세히 고르기<small>${advSum.length?esc(advSum.join(' · ')):'다른 날짜 · 걷는 거리 · 놀거리 · 처음 만나는 날'}</small></span><span class="chev">${advOpen?'접기 ▴':'펼치기 ▾'}</span></button>
+  ${advOpen?`<div class="foldbody">
+    <h2 style="font-size:15px;margin:4px 0 8px">다른 날짜</h2><input class="dateinput" id="date-input" type="date" aria-label="날짜 직접 고르기" min="${today()}" value="${c.date}">
+    ${car?'':`<h2 style="font-size:15px;margin:18px 0 8px">걷는 거리</h2><div class="chips" style="margin-top:10px">${[[500,'500m 안'],[1000,'1km 안'],[2000,'2km 안'],[0,'상관없어요']].map(x=>`<button class="chip sm" data-act="set" data-k="limit" data-v="${x[0]}" aria-pressed="${c.limit===x[0]}">${x[1]}</button>`).join('')}</div><p class="hint">코스 안에서 가장 먼 두 곳 사이를 걷는 거리예요</p>`}
+    <div style="margin-top:18px">  <section class="q" style="padding:0;border:0;margin:0 0 14px"><h2>놀거리<small>여러 개 골라도 돼요</small></h2>
     <div class="chips">${PLAYS.map(p=>`<button class="chip" data-act="play" data-v="${p[0]}" aria-pressed="${c.play.includes(p[0])}">${p[1]}</button>`).join('')}</div></section>
-  <section class="q" style="display:flex;flex-direction:column;gap:8px">
+  <section class="q" style="padding:0;border:0;margin:0 0 14px" style="display:flex;flex-direction:column;gap:8px">
     <button class="optrow" data-act="toggle" data-k="first" aria-pressed="${c.first}"><span>처음 만나는 날<small>영화·감성 코스를 먼저</small></span><span class="switch"></span></button>
     <button class="optrow" data-act="toggle" data-k="noRaw" aria-pressed="${c.noRaw}"><span>날것은 빼주세요<small>회·사시미가 주메뉴인 곳</small></span><span class="switch"></span></button></section>
-  <section class="q nlbox"><h2>말로 찾기<small>문장으로 쓰면 위 조건으로 바꿔서 바로 추천해요</small></h2>
+</div>
+  </div>`:''}</section>
+  <section class="q nlbox"><button class="fold" data-act="fold" data-k="planNL" aria-expanded="${(F.planNL||S.nlRes)?'true':'false'}"><span>문장으로 한 번에 고르기<small>예) 토요일 저녁, 차 없이, 가볍게 한 잔</small></span><span class="chev">${(F.planNL||S.nlRes)?'접기 ▴':'펼치기 ▾'}</span></button>
+    ${(F.planNL||S.nlRes)?`<div class="foldbody">
     <form id="nl-form" class="nlform"><textarea id="nl-text" rows="3" placeholder="예) 토요일 저녁에 차 없이 김해에서, 술은 가볍게 한 잔하고 보드게임도 하고 싶어" aria-label="원하는 데이트를 문장으로 쓰기">${esc(S.nlText||'')}</textarea>
-    <button class="cta" type="submit" style="margin-top:10px">이 문장으로 코스 찾기${ic('arrow',20)}</button></form>
+    <button class="cta quiet" type="submit" style="margin-top:10px">이 문장으로 코스 찾기</button></form>
     ${S.nlRes?`<div class="nlres" role="status"><b>이렇게 알아들었어요</b><div class="chips" style="margin-top:8px">${S.nlRes.got.length?S.nlRes.got.map(x=>`<span class="chip sm" aria-pressed="true">${esc(x)}</span>`).join(''):'<span class="hint">알아들은 조건이 없어요. 요일·시간·차·술·놀거리 단어를 넣어 보세요</span>'}</div>${S.nlRes.miss.length?`<p class="hint">${esc(S.nlRes.miss.join(' · '))}</p>`:''}</div>`:''}
-    <p class="hint">데모는 단어 규칙으로 바꿔요. 정식 버전은 AI가 문장을 이해해요</p></section>
+    <p class="hint">데모는 단어 규칙으로 바꿔요. 정식 버전은 AI가 문장을 이해해요</p></div>`:''}</section>
   </div></div>
   <div class="dock"><a class="cta" href="#courses">${n?`맞는 코스 ${n}개 보기`:'조건에 가까운 코스 보기'}${ic('arrow',20)}</a></div>`;
 }
@@ -511,7 +530,7 @@ function vCourses(){
   return `<div class="pad">
   <header class="top"><h1 class="display" style="font-size:28px">${S.city} 코스</h1>${citySeg()}</header>
   <button class="row" data-go="plan" style="margin-top:12px;width:100%;padding:10px 14px;border-radius:20px;background:var(--card);box-shadow:var(--shadow);text-align:left;min-height:52px">${ic('tune',20)}<span class="grow" style="font-size:13px;line-height:1.5">${condChips().map(esc).join(' · ')}</span><b style="font-size:13px;color:var(--link);white-space:nowrap">바꾸기</b></button>
-  ${R.fit.length+R.near.length>=2?`<button class="wheelbtn" data-act="wheel"><span class="wheelico" aria-hidden="true"></span><span class="grow"><b>고르기 어렵다면 돌림판</b><small>추천 코스 ${Math.min(8,R.fit.length+R.near.length)}개 중에서 하나를 뽑아 드려요</small></span>${ic('arrow',18)}</button>`:''}
+  ${R.fit.length+R.near.length>=2?`<button class="wheelbtn slim" data-act="wheel"><span class="wheelico" aria-hidden="true"></span><span class="grow"><b>고르기 어렵다면 돌림판</b></span>${ic('arrow',16)}</button>`:''}
   <div class="scrollx" style="margin-top:12px">${tf.map(x=>`<button class="chip sm" data-act="type" data-v="${x[0]}" aria-pressed="${S.type===x[0]}">${x[1]}</button>`).join('')}</div>
   ${R.fit.length?`<div class="list">${R.fit.map((r,i)=>courseCard(r,i,i===0)).join('')}</div>`:`<div class="empty"><b style="color:var(--ink)">지금 조건에 딱 맞는 코스가 없어요</b><br>걷는 거리나 놀거리 조건을 조금 풀어 보세요.<div style="margin-top:12px"><a class="cta ghost" href="#plan">조건 바꾸기</a></div></div>`}
   ${R.near.length?`<section class="sect"><h2>조금만 더 걸으면</h2><div class="list">${R.near.map(r=>courseCard(r).replace('<div class="reasons">',`<div class="reasons"><span class="tag warn">${esc(r.near)}</span>`)).join('')}</div></section>`:''}
@@ -538,7 +557,7 @@ function vDetail(id){
   ${r.out?`<div class="box warn"><b>지금 조건과는 안 맞는 코스예요.</b> ${esc(r.out)}</div>`:''}
   ${r.near?`<div class="box warn">${esc(r.near)}</div>`:''}
   ${c.note?`<div class="box info">${esc(MAP?c.note.replace(' 차량 이동 시간은 아직 재지 않았어요.',''):c.note)}</div>`:''}
-  ${r.warn.length?`<div class="box warn"><b>가기 전에 확인하세요</b><ul>${r.warn.map(w=>`<li>${esc(w)}</li>`).join('')}</ul>${r.better?`<button class="cta" style="min-height:46px;font-size:14px;margin-top:10px" data-act="set" data-k="time" data-v="${r.better}">${TIMES[r.better][0]}(${hm(TIMES[r.better][1])}~)로 바꾸면 시간이 맞아요</button>`:''}</div>`:''}
+  ${r.warn.length?`<div class="box warn"><b>가기 전에 확인하세요</b><ul>${r.warn.map(w=>`<li>${esc(w)}</li>`).join('')}</ul>${r.better?`<button class="cta quiet" style="min-height:44px;font-size:14px;margin-top:10px" data-act="set" data-k="time" data-v="${r.better}">${TIMES[r.better][0]}(${hm(TIMES[r.better][1])}~)로 바꾸면 시간이 맞아요</button>`:''}</div>`:''}
   ${MAP?mapCard(id,r,car):''}
   <ol class="tl">${r.stops.map((s,i)=>stopHTML(r,s,i,car)).join('')}</ol>
   <p class="note" style="margin-top:8px">시간표는 어림값이에요. 머무는 시간은 식사 80분, 카페 60분, 영화 150분처럼 잡았어요.${r.stops.some(s=>s.leg&&s.leg.tmin)?' 카카오맵으로 재지 못한 구간은 TMAP 길찾기 시간을 썼어요.':''}${r.stops.some(s=>s.leg&&!s.leg.m&&!s.leg.tmin&&!s.leg.car)?' 아직 재지 못한 구간은 이동 10분으로 잡았어요.':''}${r.stops.some(s=>s.leg&&s.leg.car&&!s.leg.tmin)?' 차량 이동 시간을 모르는 구간은 15분으로 잡았어요.':''}</p>
@@ -559,7 +578,6 @@ function stopHTML(r,s,i,car){
   if(p.parking)kv.push(['주차',p.parking]);
   if(D.station[s.id])kv.push(['역',`${D.station[s.id][0]}에서 걸어서 ${D.station[s.id][2]}분 · ${dist(D.station[s.id][1])}`]);
   const body=!open?'':`<div class="sbody">
-    <div class="photoph" aria-hidden="true"><div style="background:${sec[0]}">${ic(picon(p),26)}</div><div style="background:#F3ECE4;font-size:11.5px;color:#4A433E;text-align:center;line-height:1.4">사진은<br>준비 중이에요</div></div>
     ${p.blurb?`<p>${esc(p.blurb)}</p>`:'<p class="sub">소개 글은 아직 준비 중이에요.</p>'}
     ${p.team?`<p style="margin-top:8px"><span class="tag">팀 메모</span> ${esc(p.team)}</p>`:''}
     ${s.hc?`<div class="box ${s.hc.lvl==='bad'?'warn':'warn'}" style="margin-top:10px">${esc(s.hc.msg)}</div>`:''}
@@ -567,9 +585,9 @@ function stopHTML(r,s,i,car){
     ${kv.length?`<dl class="kv">${kv.map(k=>`<dt>${k[0]}</dt><dd>${esc(k[1])}</dd>`).join('')}</dl>`:'<p class="sub" style="margin-top:8px">영업시간과 가격 정보는 아직 없어요.</p>'}
     <div class="maplinks">${p.kakao?`<a class="maplink" href="${esc(p.kakao)}" target="_blank" rel="noopener">${ic('pin',18)}카카오맵에서 보기</a>`:''}${MAP?`<button class="maplink" data-act="nmap" data-i="${i}">${ic('route',18)}네이버지도 앱으로 길찾기</button>`:''}</div>
     ${p.sec==='맛집'?`<div style="margin-top:6px">${S.resv[s.id]?`<span class="tag ok">예약 요청됨 · ${dlabel(S.resv[s.id].date)} ${S.resv[s.id].time} · ${S.resv[s.id].n}명</span>`:`<button class="chip sm" data-act="resv" data-id="${s.id}" data-t="${hm(s.t)}">${ic('check',15)}이 식당 예약하기 (무료)</button>`}</div>`:''}
-    <div style="margin-top:6px">${S.visits[s.id]?`<span class="tag ok">방문 인증됨 · ${dlabel(S.visits[s.id])}</span>`:`<button class="chip sm" data-act="qr" data-id="${s.id}">${ic('camera',15)}방문 인증하기</button>`}</div>
+    ${S.visits[s.id]?`<div style="margin-top:6px"><span class="tag ok">방문 인증됨 · ${dlabel(S.visits[s.id])}</span></div>`:(S.diary.some(e=>'c-'+e.courseId===route()&&e.status==='plan')?`<div style="margin-top:6px"><button class="chip sm" data-act="qr" data-id="${s.id}">${ic('camera',15)}방문 인증하기</button></div>`:'')}
     ${reviewBlock(s.id)}
-    ${s.alts.length?`<div class="alts"><h4>다른 곳으로 바꾸기</h4><div class="chips">${s.alts.map(a=>`<button class="chip sm" data-act="swap" data-slot="${s.slot}" data-v="${a}">${esc(PL[a].name)}${PL[a].visited?' ·&nbsp;<span style="color:var(--ok)">가봤어요</span>':''}</button>`).join('')}</div></div>`:''}
+    ${s.alts.length?`<div class="alts">${(S.folds||{})['alt'+i]?`<h4>다른 곳으로 바꾸기</h4><div class="chips">${s.alts.map(a=>`<button class="chip sm" data-act="swap" data-slot="${s.slot}" data-v="${a}">${esc(PL[a].name)}${PL[a].visited?' ·&nbsp;<span style="color:var(--ok)">가봤어요</span>':''}</button>`).join('')}</div><button class="textbtn" data-act="fold" data-k="alt${i}">접기</button>`:`<button class="textbtn" data-act="fold" data-k="alt${i}">다른 곳으로 바꾸기 (${s.alts.length}곳)</button>`}</div>`:''}
   </div>`;
   return `<li class="stop" id="stop-${i}">${leg}<span class="dotc" style="background:${sec[0]}">${ic(picon(p),18)}<span class="dnum" aria-hidden="true">${i+1}</span></span>
   <button class="shead" data-act="open" data-i="${i}" aria-expanded="${open}"><span class="grow"><span class="t"><span class="sr">${i+1}번 · </span>${hm(s.t)} · ${esc(p.sub||p.sec)}</span><b>${esc(p.name)}</b><span class="row wrap" style="gap:5px;margin-top:3px">${badges}</span></span><span class="pm" aria-hidden="true">${open?'−':'+'}</span></button>${body}</li>`;
@@ -744,6 +762,7 @@ function rvRank(label){return TIERS.findIndex(x=>x[1]===label)}
 function reviewBlock(id){
   const list=(S.reviews[id]||[]).slice().sort((a,b)=>rvRank(b.tier)-rvRank(a.tier)||b.d.localeCompare(a.d));
   const mine=list.some(r=>r.mine);
+  if(!list.length&&!S.visits[id])return '';
   const head=`<div class="rvhead"><h4>방문 인증 후기</h4><span class="sub" style="font-size:12px">QR로 다녀간 사람만 쓸 수 있어요 · 등급이 높을수록 위에 보여요</span></div>`;
   const items=list.map(r=>{const tc=(TIERS.find(x=>x[1]===r.tier)||[0,'','#8A7F76'])[2];const master=rvRank(r.tier)>=5;
     return `<li class="rv${master?' rvm':''}"><div class="row" style="gap:6px;flex-wrap:wrap"><span class="tag" style="background:${tc};color:#fff">${esc(r.tier||'등급 없음')}</span>${master?'<span class="tag" style="background:#1F1A17;color:#F4B183">마스터 픽</span>':''}<span class="rvstar" aria-label="별점 ${r.s}점">${'★'.repeat(r.s)}${'☆'.repeat(5-r.s)}</span><span class="sub" style="font-size:11.5px">${dlabel(r.d)}${r.mine?' · 내 후기':''}</span></div><p style="margin-top:4px">${esc(r.t)}</p></li>`}).join('');
@@ -757,8 +776,7 @@ function gaugeCard(city){
   return `<article class="gcard"><div class="row" style="justify-content:space-between;align-items:flex-end"><div><p class="gcity2">${city}</p><p class="gtier2" style="color:${cur?cur[2]:'#8A7F76'}">${cur?cur[1]:'아직 등급 없음'}</p></div><p class="gn">QR 방문 <b>${n}</b>회</p></div>
   <div class="gbar2" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="${city} 다음 등급까지 진행"><div style="width:${pct}%;background:${cur?cur[2]:'#C9B8A8'}"></div></div>
   <p class="sub" style="font-size:13px;margin-top:6px">${next?`다음 등급 <b>${next[1]}</b>까지 ${next[0]-n}회`:'최고 등급 마스터를 찍었어요'}</p>
-  <div class="ladder">${TIERS.map(t=>`<span class="rung ${n>=t[0]?'on':''}" style="${n>=t[0]?'background:'+t[2]+';color:#fff':''}">${t[1]}<small>${t[0]}</small></span>`).join('')}</div>
-  <button class="chip sm" data-act="g-add" data-v="${city}" style="margin-top:10px">${ic('plus',15)}데모: 방문 10회 더하기</button></article>`;
+  <div class="ladder">${TIERS.map(t=>`<span class="rung ${n>=t[0]?'on':''}" style="${n>=t[0]?'background:'+t[2]+';color:#fff':''}">${t[1]}<small>${t[0]}</small></span>`).join('')}</div></article>`;
 }
 function vStickers(){
   const cities=['진주','김해'];const masters=cities.filter(c=>gaugeCount(c)>=500).length;const plat=cities.filter(c=>gaugeCount(c)>=200).length;
@@ -768,7 +786,8 @@ function vStickers(){
   <div class="row" style="gap:6px;margin-top:6px"><input type="date" id="couple-date" max="${today()}" value="${S.couple||''}" aria-label="처음 만난 날" class="cdate"><button class="chip sm" data-act="couple-save">저장</button></div></div></section>
   ${cities.map(gaugeCard).join('')}
   <section class="amb"><p class="ambh">${ic('star',18)} 데이트핏 앰버서더</p><p>여러 도시에서 마스터를 찍거나, 경상도에서 플래티넘·마스터를 여러 개 모은 커플을 앰버서더로 모셔요. 앰버서더의 추천과 영상에는 ‘진주 마스터’ 같은 인증이 함께 보여요.</p><p class="sub" style="font-size:12.5px;margin-top:6px">지금: 마스터 ${masters}곳 · 플래티넘 이상 ${plat}곳. 정확한 기준은 계획 단계예요.</p></section>
-  <p class="note">등급: 10 브론즈 · 50 실버 · 100 골드 · 200 플래티넘 · 300 다이아 · 500 마스터. 실제 서비스에서는 가게 테이블의 QR을 찍을 때마다 1회가 쌓여요. 이 데모의 ‘방문 10회 더하기’는 등급이 바뀌는 모습을 보여주기 위한 버튼이에요. <button data-act="g-reset">데모 방문 기록 지우기</button></p>
+  <p class="note">등급: 10 브론즈 · 50 실버 · 100 골드 · 200 플래티넘 · 300 다이아 · 500 마스터. 실제 서비스에서는 가게 테이블의 QR을 찍을 때마다 1회가 쌓여요. </p>
+  <div style="margin-top:14px">${(S.folds||{}).gDemo?`<div class="box info"><b>데모 조작</b> 등급이 바뀌는 모습을 보여 주기 위한 버튼이에요. 실제 서비스에는 없어요.<div class="chips" style="margin-top:10px">${cities.map(ct=>`<button class="chip sm" data-act="g-add" data-v="${ct}">${ic('plus',15)}${ct} 방문 10회</button>`).join('')}</div><button class="textbtn" data-act="g-reset" style="margin-top:6px">데모 방문 기록 지우기</button> <button class="textbtn" data-act="fold" data-k="gDemo">접기</button></div>`:`<button class="textbtn" data-act="fold" data-k="gDemo">데모 조작 펼치기</button>`}</div>
   </div>${nav('stickers')}`;
 }
 
@@ -926,6 +945,7 @@ document.addEventListener('click',e=>{
   if(a==='set'){const k=b.dataset.k;c[k]=(k==='limit')?+v:v;save();render(true);return}
   if(a==='play'){c.play=c.play.includes(v)?c.play.filter(x=>x!==v):[...c.play,v];save();render(true);return}
   if(a==='toggle'){c[b.dataset.k]=!c[b.dataset.k];save();render(true);return}
+  if(a==='fold'){const k=b.dataset.k;S.folds=S.folds||{};S.folds[k]=!S.folds[k];render(true);return}
   if(a==='open'){const i=+b.dataset.i;S.open=S.open===i?-1:i;render(true);return}
   if(a==='swap'){const id=route().slice(2);(S.picks[id]=S.picks[id]||{})[b.dataset.slot]=v;render(true);toast(`${PL[v].name}(으)로 바꿨어요`);return}
   if(a==='stk'){toast(b.dataset.how);return}
