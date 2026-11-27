@@ -281,7 +281,7 @@ button.maplink{color:var(--link)}
 </style>
 
 <div class="app" id="app"></div>
-<script src="explore.js?v=20261128b"></script>
+<script src="explore.js?v=20261128c"></script>
 <div id="layer"></div>
 
 <script>
@@ -339,13 +339,14 @@ const picon=p=>p.sec==='놀거리'?(PLAYICON[p.play]||'game'):SEC[p.sec][1];
 /* ---------- 상태 ---------- */
 const saved=(()=>{try{return JSON.parse(localStorage.getItem(LS))||{}}catch(e){return {}}})();
 const S={
-  city:saved.city==='김해'?'김해':'진주',
+  city:typeof saved.city==='string'&&saved.city?saved.city:'진주',
+  region:typeof saved.region==='string'&&saved.region?saved.region:(saved.city==='김해'?'경상남도_김해시.json':'경상남도_진주시.json'),
   cond:Object.assign({date:today(),time:'afternoon',move:'walk',limit:1000,alc:'none',play:[],first:false,noRaw:false},saved.cond||{}),
   diary:Array.isArray(saved.diary)?saved.diary:[],
   type:'all', picks:{}, open:0, sheet:null, visits:(saved.visits&&typeof saved.visits==='object')?saved.visits:{}, oslots:[], couple:saved.couple||null, extra:(saved.extra&&typeof saved.extra==='object')?saved.extra:{}, resv:(saved.resv&&typeof saved.resv==='object')?saved.resv:{}, reviews:(saved.reviews&&typeof saved.reviews==='object')?saved.reviews:{}, rvStar:5
 };
 if(S.cond.date<today())S.cond.date=today();
-function save(){try{localStorage.setItem(LS,JSON.stringify({city:S.city,cond:S.cond,diary:S.diary,visits:S.visits,couple:S.couple,extra:S.extra,resv:S.resv,reviews:S.reviews}));return true}catch(e){return false}}
+function save(){try{localStorage.setItem(LS,JSON.stringify({city:S.city,region:S.region,cond:S.cond,diary:S.diary,visits:S.visits,couple:S.couple,extra:S.extra,resv:S.resv,reviews:S.reviews}));return true}catch(e){return false}}
 
 /* ---------- 추천 로직 ---------- */
 function stay(p){if(p.sub==='영화관')return 150;if(p.play==='공방·체험')return 90;return {'맛집':80,'카페':60,'술집':90,'산책·관광':50,'놀거리':60}[p.sec]}
@@ -461,7 +462,8 @@ function nav(cur){
   const it=[['home','홈','home'],['courses','코스','route'],['explore','경상권','pin'],['stickers','게이지','star'],['diary','기록','book']];
   return `<nav class="nav" aria-label="하단 메뉴"><div>${it.map(x=>`<a href="#${x[0]}" ${cur===x[0]?'aria-current="page"':''}>${ic(x[2],20)}${x[1]}</a>`).join('')}</div></nav>`;
 }
-function citySeg(){return `<div class="seg" role="group" aria-label="지역">${['진주','김해'].map(c=>`<button data-act="city" data-v="${c}" aria-pressed="${S.city===c}">${c}</button>`).join('')}</div>`}
+function citySeg(){return `<button class="chip" data-xact="region" aria-label="지역 바꾸기, 지금 ${esc(S.city)}">${ic('pin',16)}${esc(S.city)} <span aria-hidden="true" style="opacity:.6">▾</span></button>`}
+function curatedCity(){return D.courses.some(c=>c.city===S.city)}
 
 /* ---------- 홈 ---------- */
 function vHome(){
@@ -473,9 +475,9 @@ function vHome(){
   <section class="hero"><h1 class="display">오늘 우리,<br>어디 갈까?</h1><p class="sub">조건만 고르면 ${S.city}에서 동선이 맞는 코스를 골라드려요</p></section>
   ${upcoming?`<button class="next" data-go="diary"><span class="grow"><small>다가오는 데이트 · ${dlabel(upcoming.date)}</small><br><b>${esc(upcoming.title)}</b></span>${ic('arrow',20)}</button>`:''}
   <div style="margin-top:18px"><a class="cta" href="#plan">${ic('tune',20)}조건 고르고 추천받기</a></div>
-  <section class="sect"><h2>어떤 데이트?</h2><div class="types">${Object.entries(TYPES).map(([k,t])=>{const n=all.filter(c=>c.type===k).length;return `<button class="typecard" style="background:${t.color}" data-act="type" data-v="${k}"><span>${t.label}<small>코스 ${n}개</small></span>${ic(t.icon,24)}</button>`}).join('')}</div></section>
-  <section class="sect"><h2>팀이 직접 가본 곳이 많은 코스</h2><div class="list">${picks.map(r=>courseCard(r)).join('')}</div></section>
-  <p class="note" style="margin-bottom:-12px"><a href="#owner" style="font-weight:700">사장님이신가요? 입점 안내 보기</a></p><p class="note">장소 정보는 2026년 11월 8일 카카오맵 기준이에요. 영업시간과 가격은 바뀔 수 있으니 가기 전에 확인해 주세요. <button data-act="info">데이터 안내 보기</button></p>
+  ${!all.length?xAutoSection(3):`<section class="sect"><h2>어떤 데이트?</h2><div class="types">${Object.entries(TYPES).map(([k,t])=>{const n=all.filter(c=>c.type===k).length;return `<button class="typecard" style="background:${t.color}" data-act="type" data-v="${k}"><span>${t.label}<small>코스 ${n}개</small></span>${ic(t.icon,24)}</button>`}).join('')}</div></section>
+  <section class="sect"><h2>팀이 직접 가본 곳이 많은 코스</h2><div class="list">${picks.map(r=>courseCard(r)).join('')}</div></section>`}
+  <p class="note" style="margin-bottom:-12px"><a href="#owner" style="font-weight:700">사장님이신가요? 입점 안내 보기</a></p><p class="note">${all.length?`팀 추천 코스의 장소 정보는 2026년 11월 8일 카카오맵 기준이고, 상권 코스는 소상공인시장진흥공단 상가정보(2026년 9월 30일 기준)로 짰어요.`:`상권 코스는 소상공인시장진흥공단 상가정보(2026년 9월 30일 기준)로 짰어요.`} 영업시간과 가격은 바뀔 수 있으니 가기 전에 확인해 주세요. <button data-act="info">데이터 안내 보기</button></p>
   </div>${nav('home')}`;
 }
 
@@ -520,21 +522,22 @@ function vPlan(){
     ${S.nlRes?`<div class="nlres" role="status"><b>이렇게 알아들었어요</b><div class="chips" style="margin-top:8px">${S.nlRes.got.length?S.nlRes.got.map(x=>`<span class="chip sm" aria-pressed="true">${esc(x)}</span>`).join(''):'<span class="hint">알아들은 조건이 없어요. 요일·시간·차·술·놀거리 단어를 넣어 보세요</span>'}</div>${S.nlRes.miss.length?`<p class="hint">${esc(S.nlRes.miss.join(' · '))}</p>`:''}</div>`:''}
     <p class="hint">데모는 단어 규칙으로 바꿔요. 정식 버전은 AI가 문장을 이해해요</p></div>`:''}</section>
   </div></div>
-  <div class="dock"><a class="cta" href="#courses">${n?`맞는 코스 ${n}개 보기`:'조건에 가까운 코스 보기'}${ic('arrow',20)}</a></div>`;
+  <div class="dock"><a class="cta" href="#courses">${!curatedCity()?`${esc(S.city)} 코스 보기`:n?`맞는 코스 ${n}개 보기`:'조건에 가까운 코스 보기'}${ic('arrow',20)}</a></div>`;
 }
 
 /* ---------- 코스 목록 ---------- */
 function vCourses(){
-  const R=ranked();
+  const R=ranked();const cur=curatedCity();
   const tf=[['all','전체'],...Object.entries(TYPES).map(([k,t])=>[k,t.label])];
   return `<div class="pad">
   <header class="top"><h1 class="display" style="font-size:28px">${S.city} 코스</h1>${citySeg()}</header>
   <button class="row" data-go="plan" style="margin-top:12px;width:100%;padding:10px 14px;border-radius:20px;background:var(--card);box-shadow:var(--shadow);text-align:left;min-height:52px">${ic('tune',20)}<span class="grow" style="font-size:13px;line-height:1.5">${condChips().map(esc).join(' · ')}</span><b style="font-size:13px;color:var(--link);white-space:nowrap">바꾸기</b></button>
-  ${R.fit.length+R.near.length>=2?`<button class="wheelbtn slim" data-act="wheel"><span class="wheelico" aria-hidden="true"></span><span class="grow"><b>고르기 어렵다면 돌림판</b></span>${ic('arrow',16)}</button>`:''}
-  <div class="scrollx" style="margin-top:12px">${tf.map(x=>`<button class="chip sm" data-act="type" data-v="${x[0]}" aria-pressed="${S.type===x[0]}">${x[1]}</button>`).join('')}</div>
-  ${R.fit.length?`<div class="list">${R.fit.map((r,i)=>courseCard(r,i,i===0)).join('')}</div>`:`<div class="empty"><b style="color:var(--ink)">지금 조건에 딱 맞는 코스가 없어요</b><br>걷는 거리나 놀거리 조건을 조금 풀어 보세요.<div style="margin-top:12px"><a class="cta ghost" href="#plan">조건 바꾸기</a></div></div>`}
+  ${!cur?'':R.fit.length+R.near.length>=2?`<button class="wheelbtn slim" data-act="wheel"><span class="wheelico" aria-hidden="true"></span><span class="grow"><b>고르기 어렵다면 돌림판</b></span>${ic('arrow',16)}</button>`:''}
+  ${!cur?'':`<div class="scrollx" style="margin-top:12px">${tf.map(x=>`<button class="chip sm" data-act="type" data-v="${x[0]}" aria-pressed="${S.type===x[0]}">${x[1]}</button>`).join('')}</div>`}
+  ${!cur?'':R.fit.length?`<div class="list">${R.fit.map((r,i)=>courseCard(r,i,i===0)).join('')}</div>`:`<div class="empty"><b style="color:var(--ink)">지금 조건에 딱 맞는 코스가 없어요</b><br>걷는 거리나 놀거리 조건을 조금 풀어 보세요.<div style="margin-top:12px"><a class="cta ghost" href="#plan">조건 바꾸기</a></div></div>`}
   ${R.near.length?`<section class="sect"><h2>조금만 더 걸으면</h2><div class="list">${R.near.map(r=>courseCard(r).replace('<div class="reasons">',`<div class="reasons"><span class="tag warn">${esc(r.near)}</span>`)).join('')}</div></section>`:''}
   ${R.out.length?`<details class="out"><summary>조건에 안 맞아 빠진 코스 ${R.out.length}개</summary><ul>${R.out.map(r=>`<li><b>${esc(r.c.title)}</b><br>${esc(r.out)}</li>`).join('')}</ul></details>`:''}
+  ${xAutoSection(8)}
   </div>${nav('courses')}`;
 }
 
@@ -838,6 +841,7 @@ function vOwner(){
 /* ---------- 시트 ---------- */
 function sheetHTML(){
   const s=S.sheet;if(!s)return '';
+  if(s.kind==='region')return xRegionSheet();
   let inner='';
   if(s.kind==='info')inner=`<h2>데이터 안내</h2><ul>
    <li>장소 이름, 주소, 영업시간, 가격, 주차는 2026년 11월 8일 카카오맵에 나온 내용을 옮긴 거예요. 그 뒤로 바뀌었을 수 있어요.</li>
@@ -988,7 +992,7 @@ document.addEventListener('click',e=>{
 document.addEventListener('submit',e=>{
   if(e.target.id!=='nl-form')return;e.preventDefault();
   const t=(document.getElementById('nl-text')||{}).value||'';S.nlText=t;const r=nl2cond(t);S.nlRes=r;
-  const c=S.cond;Object.entries(r.set).forEach(([k,v])=>{if(k==='city')S.city=v;else c[k]=v});
+  const c=S.cond;Object.entries(r.set).forEach(([k,v])=>{if(k==='city'){S.city=v;S.region=v==='김해'?'경상남도_김해시.json':'경상남도_진주시.json'}else c[k]=v});
   save();
   if(!r.got.length){render(true);return}
   location.hash='courses';setTimeout(()=>toast(`문장을 조건 ${r.got.length}개로 바꿨어요`),60);
