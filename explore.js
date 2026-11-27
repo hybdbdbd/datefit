@@ -6,11 +6,11 @@
 const XR = 'data/sbiz/';
 const REPORT_URL = ''; // 휴무 신고용 구글폼 주소를 넣으면 신고 버튼이 그 폼을 엽니다. 비어 있으면 신고 내용을 복사합니다.
 const X = {idx: null, files: {}, V: null, sido: '경상남도', sgg: '경상남도_진주시.json', loading: false, err: null};
-const XG = ['식사', '카페', '디저트', '술', '놀거리', '체험', '꽃·소품', '숙박'];
-const XGC = {'식사': '#FFD9B8', '카페': '#E9DCC9', '디저트': '#FBD3DF', '술': '#D9D3F5', '놀거리': '#CDEBDD', '체험': '#CDEBDD', '꽃·소품': '#F6E7B0', '숙박': '#E2E2E2'};
-const XGI = {'식사': 'food', '카페': 'cafe', '디저트': 'cafe', '술': 'bar', '놀거리': 'game', '체험': 'craft', '꽃·소품': 'bag', '숙박': 'home'};
-const XT = {lunch: ['점심', [['식사'], ['카페', '디저트'], ['놀거리', '체험', '꽃·소품', '-']]],
-            afternoon: ['오후', [['놀거리', '체험', '꽃·소품'], ['카페', '디저트'], ['식사']]],
+const XG = ['식사', '카페', '디저트', '술', '놀거리', '체험', '소품·서점', '꽃집', '숙박'];
+const XGC = {'식사': '#FFD9B8', '카페': '#E9DCC9', '디저트': '#FBD3DF', '술': '#D9D3F5', '놀거리': '#CDEBDD', '체험': '#CDEBDD', '소품·서점': '#F6E7B0', '꽃집': '#FBD3DF', '숙박': '#E2E2E2'};
+const XGI = {'식사': 'food', '카페': 'cafe', '디저트': 'cafe', '술': 'bar', '놀거리': 'game', '체험': 'craft', '소품·서점': 'bag', '꽃집': 'star', '숙박': 'home'};
+const XT = {lunch: ['점심', [['식사'], ['카페', '디저트'], ['놀거리', '체험', '소품·서점', '-']]],
+            afternoon: ['오후', [['놀거리', '체험', '소품·서점'], ['카페', '디저트'], ['식사']]],
             evening: ['저녁', [['식사'], ['놀거리', '체험', '-'], ['술', '디저트']]]};
 const XLOW = new Set(['백반/한정식', '김밥/만두/분식', '치킨', '국/탕/찌개류', '중국집', '피자', '버거', '떡/한과', '복권 발행/판매업', 'PC방']);
 const XSIDO = ['부산광역시', '대구광역시', '울산광역시', '경상북도', '경상남도'];
@@ -56,7 +56,7 @@ function xplace(d, p) { return {id: p[0], name: p[1], g: d.groups[p[2]], sub: d.
 /* 코스 짜기: 상권 중심 반경 안에서 시간대 틀에 맞춰, 앞 장소와 가까운 곳을 고름. 확인된 가게를 먼저. */
 function xcourse(d, spot, time, seed, keepFr) {
   const rnd = xrng(seed * 7919 + time.length), c = [spot.lat, spot.lon];
-  let pool = d.p.map(p => xplace(d, p)).filter(p => p.g !== '숙박' && xdist(c, p.ll) <= 450);
+  let pool = d.p.map(p => xplace(d, p)).filter(p => p.g !== '숙박' && p.g !== '꽃집' && xdist(c, p.ll) <= 450);
   if (!keepFr) { const nf = pool.filter(p => !p.fr); if (nf.length >= 6) pool = nf; }
   const used = new Set(), stops = [];
   for (const slot of XT[time][1]) {
@@ -75,6 +75,12 @@ function xcourse(d, spot, time, seed, keepFr) {
     used.add(p.id); stops.push(p);
   }
   return stops;
+}
+function xflowers(d, stops) {
+  if (!stops.length) return [];
+  return d.p.map(p => xplace(d, p)).filter(p => p.g === '꽃집')
+    .map(p => Object.assign(p, {near: Math.min(...stops.map(s => xdist(s.ll, p.ll)))}))
+    .filter(p => p.near <= 500).sort((a, b) => a.near - b.near).slice(0, 3);
 }
 function xbadge(p) {
   const v = X.V && X.V[p.id];
@@ -133,6 +139,7 @@ function vXCourse(h) {
       ${X.V && X.V[p.id] && X.V[p.id].hours ? `<p style="color:var(--ink)">${esc(X.V[p.id].hours)}</p>` : ''}
       <div class="xbtns">${xmaps(p)}<button class="chip sm" data-xact="report" data-v="${esc(p.id)}" data-n="${esc(p.name)}">여기 문 닫았어요</button></div></article>`;
   }).join('')}</div>`}
+  ${(() => { const fl = xflowers(d, stops); return fl.length ? `<section class="sect"><h2>${ic('star', 18)} 근처 꽃집</h2><p class="hint">코스 중간에 꽃 한 송이 어때요? 코스 장소에서 가까운 순서예요</p><div class="list">${fl.map(p => `<article class="xstop"><div class="row" style="gap:8px;flex-wrap:wrap"><span class="tag" style="background:${XGC['꽃집']}">${ic('star', 13)}꽃집</span>${xbadge(p)}</div><h3>${esc(p.name)}</h3><p>${esc(p.dong)} · 코스에서 약 ${Math.round(p.near)}m</p><div class="xbtns">${xmaps(p)}</div></article>`).join('')}</div></section>` : ''; })()}
   <div class="row" style="gap:8px;margin-top:16px"><a class="cta ghost" href="#${base}/${time}/${seed + 1}" style="flex:1">다른 코스</a><button class="cta" data-xact="share" style="flex:1.4">${ic('share', 18)}애인에게 보내기</button></div>
   <p class="note">거리는 직선거리로 잰 어림값이에요. 가게 정보는 공공데이터(2026년 9월 30일 기준)라 폐업·이전한 곳이 섞여 있을 수 있어요. 발견하면 "여기 문 닫았어요"를 눌러 알려 주세요.</p>
   </div>`;

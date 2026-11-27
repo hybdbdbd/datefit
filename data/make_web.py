@@ -15,12 +15,17 @@ BR = {b for b, v in pc.items() if v >= 8}
 def is_chain(r):
     n = norm(r["상호명"]) + norm(r["지점명"])
     return any(n[:k] in BR for k in range(3, min(len(n), 10) + 1))
-G = ["식사","카페","디저트","술","놀거리","체험","꽃·소품","숙박"]
+G = ["식사","카페","디저트","술","놀거리","체험","소품·서점","꽃집","숙박"]
+COURSE_G = ["식사","카페","디저트","술","놀거리","체험","소품·서점"]  # 코스 점수에 쓰는 그룹 (꽃집·숙박 제외)
+def grp(r):
+    if r["그룹"] == "꽃·소품": return "꽃집" if r["상권업종소분류명"] == "꽃집" else "소품·서점"
+    return r["그룹"]
 CELL = 0.0027
 by = collections.defaultdict(list)
 for r in rows: by[(r["시도명"], r["시군구명"])].append(r)
 index = []
 for (sido, sgg), lst in sorted(by.items()):
+    for r in lst: r["그룹"] = grp(r)
     lst.sort(key=lambda r: (G.index(r["그룹"]), r["상호명"]))
     subs = sorted({r["상권업종소분류명"] for r in lst}); dongs = sorted({r["행정동명"] for r in lst})
     P = []
@@ -40,11 +45,11 @@ for (sido, sgg), lst in sorted(by.items()):
                 for i in cells.get((c[0]+di, c[1]+dj), []): a[lst[i]["그룹"]] += 1
         own = collections.Counter(lst[i]["그룹"] for i in ids)
         if own["카페"] + own["식사"] + own["디저트"] < 5 or a["카페"] < 2 or a["식사"] < 2: continue
-        kinds = sum(1 for g in G[:7] if a[g] > 0)
+        kinds = sum(1 for g in COURSE_G if a[g] > 0)
         score = kinds*10 + math.log1p(a["카페"])*15 + math.log1p(a["식사"])*10 + math.log1p(a["놀거리"]+a["체험"])*12 + math.log1p(a["디저트"])*8 + math.log1p(a["술"])*4
         lat = sum(float(lst[i]["위도"]) for i in ids)/len(ids); lon = sum(float(lst[i]["경도"]) for i in ids)/len(ids)
         dong = collections.Counter(lst[i]["행정동명"] for i in ids).most_common(1)[0][0]
-        spots.append({"dong": dong, "lat": round(lat, 6), "lon": round(lon, 6), "score": round(score, 1), "cnt": {g: a[g] for g in G[:7]}})
+        spots.append({"dong": dong, "lat": round(lat, 6), "lon": round(lon, 6), "score": round(score, 1), "cnt": {g: a[g] for g in COURSE_G + ["꽃집"]}})
     spots.sort(key=lambda s: -s["score"])
     top, used = [], set()
     for s in spots:
