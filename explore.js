@@ -4,7 +4,7 @@
    - 카카오·네이버 지도는 검색 링크로만 연결하고 응답을 저장하지 않아요.
    - 휴대폰 위치(GPS)는 쓰지 않아요. 지역은 직접 고릅니다. */
 const XR = 'data/sbiz/';
-const XV = '20261128c'; // 데이터나 이 파일을 바꾸면 값도 바꿔 주세요(브라우저 캐시 갱신)
+const XV = '20261128d'; // 데이터나 이 파일을 바꾸면 값도 바꿔 주세요(브라우저 캐시 갱신)
 const REPORT_URL = ''; // 휴무 신고용 구글폼 주소를 넣으면 신고 버튼이 그 폼을 엽니다. 비어 있으면 신고 내용을 복사합니다.
 const X = {idx: null, files: {}, V: null, sido: '경상남도', sgg: '경상남도_진주시.json', loading: false, err: null};
 const XG = ['식사', '카페', '디저트', '술', '놀거리', '체험', '소품·서점', '꽃집', '숙박'];
@@ -79,11 +79,11 @@ function xcourse(d, spot, time, seed, keepFr, noAlc) {
   }
   return stops;
 }
-function xflowers(d, stops) {
+function xflowers(d, stops, max) {
   if (!stops.length) return [];
   return d.p.map(p => xplace(d, p)).filter(p => p.g === '꽃집')
     .map(p => Object.assign(p, {near: Math.min(...stops.map(s => xdist(s.ll, p.ll)))}))
-    .filter(p => p.near <= 500).sort((a, b) => a.near - b.near).slice(0, 3);
+    .filter(p => p.near <= 500).sort((a, b) => a.near - b.near).slice(0, max || 3);
 }
 function xbadge(p) {
   const v = X.V && X.V[p.id];
@@ -144,9 +144,12 @@ function vXCourse(h) {
       ${X.V && X.V[p.id] && X.V[p.id].hours ? `<p style="color:var(--ink)">${esc(X.V[p.id].hours)}</p>` : ''}
       <div class="xbtns" style="align-items:center">${xmaps(p)}<button class="textbtn" style="margin-left:auto" data-xact="report" data-v="${esc(p.id)}" data-n="${esc(p.name)}">문 닫았어요</button></div></article>`;
   }).join('')}</div>`}
-  ${(() => { const fl = xflowers(d, stops); return fl.length ? `<section class="sect"><h2>${ic('star', 18)} 근처 꽃집</h2><p class="hint">코스 중간에 꽃 한 송이 어때요? 코스 장소에서 가까운 순서예요</p><div class="list">${fl.map(p => `<article class="xstop"><div class="row" style="gap:8px;flex-wrap:wrap"><span class="tag" style="background:${XGC['꽃집']}">${ic('star', 13)}꽃집</span>${xbadge(p)}</div><h3>${esc(p.name)}</h3><p>${esc(p.dong)} · 코스에서 약 ${Math.round(p.near)}m</p><div class="xbtns">${xmaps(p)}</div></article>`).join('')}</div></section>` : ''; })()}
+  ${(() => { const fl = xflowers(d, stops, 5); if (!fl.length) return ''; const open = (S.folds || {}).xfl;
+    return `<div style="margin-top:14px">${open ? `<section class="box info" style="margin-top:0"><b>꽃·선물</b> 코스 장소에서 가까운 꽃집이에요
+      <div style="margin-top:8px">${fl.map(p => `<div class="row" style="gap:8px;padding:8px 0;border-top:1px solid var(--line)"><span class="grow" style="min-width:0"><b style="font-size:14px">${esc(p.name)}</b><br><small style="color:var(--sub)">${esc(p.dong)} · 코스에서 약 ${Math.round(p.near)}m</small></span><a class="textbtn" href="https://map.kakao.com/?q=${encodeURIComponent(p.name + ' ' + p.dong)}" target="_blank" rel="noopener" data-xact="out" data-v="kakao-flower">지도</a></div>`).join('')}</div>
+      <button class="textbtn" data-act="fold" data-k="xfl">접기</button></section>` : `<button class="textbtn" data-act="fold" data-k="xfl">${ic('star', 14)}근처 꽃·선물 가게 찾기 (${fl.length}곳)</button>`}</div>`; })()}
   <div class="row" style="gap:8px;margin-top:16px"><a class="cta ghost" href="#${base}/${time}/${seed + 1}${sfx}" style="flex:1">다른 코스</a><button class="cta" data-xact="share" style="flex:1.4">${ic('share', 18)}애인에게 보내기</button></div>
-  <p class="note">거리는 직선거리로 잰 어림값이에요. 가게 정보는 공공데이터(2026년 9월 30일 기준)라 폐업·이전한 곳이 섞여 있을 수 있어요. 발견하면 "여기 문 닫았어요"를 눌러 알려 주세요.</p>
+  <p class="note">거리는 직선거리로 잰 어림값이에요. 가게 정보는 공공데이터(2026년 9월 30일 기준)라 폐업·이전한 곳이 섞여 있을 수 있어요. 발견하면 "문 닫았어요"를 눌러 알려 주세요.</p>
   </div>`;
 }
 
